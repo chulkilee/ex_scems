@@ -1,8 +1,4 @@
 defmodule ExSCEMSTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest ExSCEMS
-
-  test "greets the world" do
-    assert ExSCEMS.hello() == :world
-  end
 end
