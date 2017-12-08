@@ -32,6 +32,9 @@ defmodule ExSCEMS.Mixfile do
 
   defp deps do
     [
+      {:httpoison, "~> 0.13"},
+      {:sweet_xml, "~> 0.6"},
+      {:bypass, "~> 0.8", only: :test},
       {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.7", only: :test},
       {:ex_doc, "~> 0.16", only: :docs, runtime: false}
