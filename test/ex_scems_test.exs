@@ -153,6 +153,57 @@ defmodule ExSCEMSTest do
   end
 
   #
+  # Customer
+  #
+
+  test "create_customer - success", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "POST", "/createCustomer.xml", fn conn ->
+      conn
+      |> assert_request_body(%{
+           "customerName" => "foo",
+           "customerRefIdType" => "guid",
+           "isEnabled" => "true"
+         })
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <emsResponse>
+           <customerId>3682</customerId>
+           <stat>ok</stat>
+         </emsResponse>
+         """)
+    end)
+
+    {:ok, %Response{stat: "ok"}, 3682} =
+      ExSCEMS.create_customer(
+        [customerName: "foo", isEnabled: true, customerRefIdType: "guid"],
+        config
+      )
+  end
+
+  test "create_customer - fail", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "POST", "/createCustomer.xml", fn conn ->
+      conn
+      |> assert_request_body(%{})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(401, """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <emsResponse>
+           <code>100</code>
+           <desc>The request parameter is not valid.</desc>
+           <stat>fail</stat>
+         </emsResponse>
+         """)
+    end)
+
+    {:error, %Response{
+      error_code: "100",
+      error_desc: "The request parameter is not valid.",
+      stat: "fail"
+    }} = ExSCEMS.create_customer([], config)
+  end
+
+  #
   # Util
   #
 

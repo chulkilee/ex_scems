@@ -73,6 +73,22 @@ defmodule ExSCEMS do
   end
 
   #
+  # Customer
+  #
+
+  @doc """
+  Create a customer with the given parameters.
+
+  [Create Customer](http://documentation.sentinelcloud.com/wsg/createCustomer.htm)
+  """
+  def create_customer(form, config) do
+    case post(config, "/createCustomer.xml", form) do
+      {:ok, resp} -> {:ok, resp, xpath(resp.body_xml, ~x"//customerId/text()"i)}
+      {:error, error} -> {:error, error}
+    end
+  end
+
+  #
   # XML
   #
 
