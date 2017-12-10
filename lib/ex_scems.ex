@@ -48,6 +48,14 @@ defmodule ExSCEMS do
           {:ok, Response.t(), String.t()} | {:error, Response.t() | any}
   def login_by_eid(endpoint, eid), do: do_login(endpoint, "/loginByEID.xml", eid: eid)
 
+  @doc """
+  [Customer Contact Login by User ID and Password](http://documentation.sentinelcloud.com/wsg/loginByContact.htm)
+  """
+  @spec login_by_contact(String.t(), String.t(), String.t()) ::
+          {:ok, Response.t(), String.t()} | {:error, Response.t() | any}
+  def login_by_contact(endpoint, email, password),
+    do: do_login(endpoint, "/loginByContact.xml", emailId: email, password: password)
+
   defp do_login(endpoint, path, form) do
     case Client.request(:post, build_url(endpoint, path, []), {:form, form}, [], []) do
       {:ok, resp} -> parse_login_response(resp)

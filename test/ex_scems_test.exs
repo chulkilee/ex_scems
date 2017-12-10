@@ -109,6 +109,49 @@ defmodule ExSCEMSTest do
       )
   end
 
+  test "login_by_contact - success", %{bypass: bypass} do
+    Bypass.expect_once(bypass, "POST", "/loginByContact.xml", fn conn ->
+      conn
+      |> assert_request_body(%{"emailId" => "foo@example.com", "password" => "bar"})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <emsResponse>
+           <entIds>
+             <entId>1234</entId>
+           </entIds>
+           <sessionId>C3ED80479F180EF00F5FB4AEA023E480</sessionId>
+           <stat>ok</stat>
+         </emsResponse>
+         """)
+    end)
+
+    {:ok, %Response{stat: "ok"}, "C3ED80479F180EF00F5FB4AEA023E480"} =
+      ExSCEMS.login_by_contact("http://127.0.0.1:#{bypass.port}", "foo@example.com", "bar")
+  end
+
+  test "login_by_contact - fail", %{bypass: bypass} do
+    Bypass.expect_once(bypass, "POST", "/loginByContact.xml", fn conn ->
+      conn
+      |> assert_request_body(%{"emailId" => "foo@example.com", "password" => "bar"})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <emsResponse>
+          <code>217</code>
+          <desc>E-mail or password is incorrect. Try again with correct credentials.</desc>
+          <stat>fail</stat>
+         </emsResponse>
+         """)
+    end)
+
+    {:error, %Response{
+      error_code: "217",
+      error_desc: "E-mail or password is incorrect. Try again with correct credentials.",
+      stat: "fail"
+    }} = ExSCEMS.login_by_contact("http://127.0.0.1:#{bypass.port}", "foo@example.com", "bar")
+  end
+
   #
   # Util
   #
