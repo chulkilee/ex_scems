@@ -88,6 +88,14 @@ defmodule ExSCEMS do
     end
   end
 
+  @doc """
+  Delete a customer with the given id.
+
+  [Delete Customer](http://documentation.sentinelcloud.com/wsg/deleteCustomerById.htm)
+  """
+  @spec delete_customer(String.t(), Config.t()) :: {:ok, Response.t()} | {:error, any}
+  def delete_customer(id, config), do: post(config, "/deleteCustomerById.xml", customerId: id)
+
   #
   # XML
   #

@@ -203,6 +203,45 @@ defmodule ExSCEMSTest do
     }} = ExSCEMS.create_customer([], config)
   end
 
+  test "delete_customer - success", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "POST", "/deleteCustomerById.xml", fn conn ->
+      conn
+      |> assert_request_body(%{"customerId" => "1"})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <emsResponse>
+           <customerId>3682</customerId>
+           <stat>ok</stat>
+         </emsResponse>
+         """)
+    end)
+
+    {:ok, %{stat: "ok"}} = ExSCEMS.delete_customer(1, config)
+  end
+
+  test "delete_customer - fail", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "POST", "/deleteCustomerById.xml", fn conn ->
+      conn
+      |> assert_request_body(%{"customerId" => "1"})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <emsResponse>
+           <code>519</code>
+           <desc>Customer not found for the given customerID.</desc>
+           <stat>fail</stat>
+         </emsResponse>
+         """)
+    end)
+
+    {:error, %Response{
+      error_code: "519",
+      error_desc: "Customer not found for the given customerID.",
+      stat: "fail"
+    }} = ExSCEMS.delete_customer(1, config)
+  end
+
   #
   # Util
   #
