@@ -41,6 +41,13 @@ defmodule ExSCEMS do
   def login_by_vendor(endpoint, username, password),
     do: do_login(endpoint, "/verifyLogin.xml", userName: username, password: password)
 
+  @doc """
+  [Customer Login By EID](http://documentation.sentinelcloud.com/wsg/loginByEID.htm)
+  """
+  @spec login_by_eid(String.t(), String.t()) ::
+          {:ok, Response.t(), String.t()} | {:error, Response.t() | any}
+  def login_by_eid(endpoint, eid), do: do_login(endpoint, "/loginByEID.xml", eid: eid)
+
   defp do_login(endpoint, path, form) do
     case Client.request(:post, build_url(endpoint, path, []), {:form, form}, [], []) do
       {:ok, resp} -> parse_login_response(resp)
