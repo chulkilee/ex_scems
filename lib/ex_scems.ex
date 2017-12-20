@@ -4,6 +4,7 @@ defmodule ExSCEMS do
   """
 
   import SweetXml
+  import ExSCEMS.XMLUtil
 
   alias ExSCEMS.{Client, Config, Response}
 
@@ -119,11 +120,4 @@ defmodule ExSCEMS do
         {:error, error}
     end
   end
-
-  #
-  # XML
-  #
-
-  defp xml_text(nil), do: nil
-  defp xml_text(xml), do: xpath(xml, ~x"//text()"s)
 end
