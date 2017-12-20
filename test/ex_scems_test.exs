@@ -27,12 +27,12 @@ defmodule ExSCEMSTest do
       |> assert_request_body(%{"userName" => "foo", "password" => "bar"})
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(200, """
-         <?xml version="1.0" encoding="UTF-8"?>
-         <emsResponse>
-           <sessionId>F53FD7E013F8358C936851EF5D6835CD</sessionId>
-           <stat>ok</stat>
-         </emsResponse>
-         """)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <sessionId>F53FD7E013F8358C936851EF5D6835CD</sessionId>
+        <stat>ok</stat>
+      </emsResponse>
+      """)
     end)
 
     {:ok, %Response{stat: "ok"}, "F53FD7E013F8358C936851EF5D6835CD"} =
@@ -45,13 +45,13 @@ defmodule ExSCEMSTest do
       |> assert_request_body(%{"userName" => "foo", "password" => "bar"})
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(200, """
-         <?xml version="1.0" encoding="UTF-8"?>
-         <emsResponse>
-          <code>215</code>
-          <desc>Incorrect user name or password provided.</desc>
-          <stat>fail</stat>
-         </emsResponse>
-         """)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <code>215</code>
+        <desc>Incorrect user name or password provided.</desc>
+        <stat>fail</stat>
+      </emsResponse>
+      """)
     end)
 
     {:error, %Response{
@@ -67,13 +67,13 @@ defmodule ExSCEMSTest do
       |> assert_request_body(%{"eid" => "c84dc253-a1cf-4eb2-82ae-76cef4cac953"})
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(200, """
-         <?xml version="1.0" encoding="UTF-8"?>
-         <emsResponse>
-          <entId>1234</entId>
-          <sessionId>5C579FCFF85D34CBB9D9926DA6635659</sessionId>
-          <stat>ok</stat>
-         </emsResponse>
-         """)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <entId>1234</entId>
+        <sessionId>5C579FCFF85D34CBB9D9926DA6635659</sessionId>
+        <stat>ok</stat>
+      </emsResponse>
+      """)
     end)
 
     {:ok, %Response{stat: "ok"}, "5C579FCFF85D34CBB9D9926DA6635659"} =
@@ -89,13 +89,13 @@ defmodule ExSCEMSTest do
       |> assert_request_body(%{"eid" => "c84dc253-a1cf-4eb2-82ae-76cef4cac953"})
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(200, """
-         <?xml version="1.0" encoding="UTF-8"?>
-         <emsResponse>
-          <code>621</code>
-          <desc>The entitlement does not exist. Retry with a correct ID.</desc>
-          <stat>fail</stat>
-         </emsResponse>
-         """)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <code>621</code>
+        <desc>The entitlement does not exist. Retry with a correct ID.</desc>
+        <stat>fail</stat>
+      </emsResponse>
+      """)
     end)
 
     {:error, %Response{
@@ -115,15 +115,15 @@ defmodule ExSCEMSTest do
       |> assert_request_body(%{"emailId" => "foo@example.com", "password" => "bar"})
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(200, """
-         <?xml version="1.0" encoding="UTF-8"?>
-         <emsResponse>
-           <entIds>
-             <entId>1234</entId>
-           </entIds>
-           <sessionId>C3ED80479F180EF00F5FB4AEA023E480</sessionId>
-           <stat>ok</stat>
-         </emsResponse>
-         """)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <entIds>
+          <entId>1234</entId>
+        </entIds>
+        <sessionId>C3ED80479F180EF00F5FB4AEA023E480</sessionId>
+        <stat>ok</stat>
+      </emsResponse>
+      """)
     end)
 
     {:ok, %Response{stat: "ok"}, "C3ED80479F180EF00F5FB4AEA023E480"} =
@@ -136,13 +136,13 @@ defmodule ExSCEMSTest do
       |> assert_request_body(%{"emailId" => "foo@example.com", "password" => "bar"})
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(200, """
-         <?xml version="1.0" encoding="UTF-8"?>
-         <emsResponse>
-          <code>217</code>
-          <desc>E-mail or password is incorrect. Try again with correct credentials.</desc>
-          <stat>fail</stat>
-         </emsResponse>
-         """)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <code>217</code>
+        <desc>E-mail or password is incorrect. Try again with correct credentials.</desc>
+        <stat>fail</stat>
+      </emsResponse>
+      """)
     end)
 
     {:error, %Response{
@@ -160,18 +160,18 @@ defmodule ExSCEMSTest do
     Bypass.expect_once(bypass, "POST", "/createCustomer.xml", fn conn ->
       conn
       |> assert_request_body(%{
-           "customerName" => "foo",
-           "customerRefIdType" => "guid",
-           "isEnabled" => "true"
-         })
+        "customerName" => "foo",
+        "customerRefIdType" => "guid",
+        "isEnabled" => "true"
+      })
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(200, """
-         <?xml version="1.0" encoding="UTF-8"?>
-         <emsResponse>
-           <customerId>3682</customerId>
-           <stat>ok</stat>
-         </emsResponse>
-         """)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <customerId>3682</customerId>
+        <stat>ok</stat>
+      </emsResponse>
+      """)
     end)
 
     {:ok, %Response{stat: "ok"}, 3682} =
@@ -187,13 +187,13 @@ defmodule ExSCEMSTest do
       |> assert_request_body(%{})
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(401, """
-         <?xml version="1.0" encoding="UTF-8"?>
-         <emsResponse>
-           <code>100</code>
-           <desc>The request parameter is not valid.</desc>
-           <stat>fail</stat>
-         </emsResponse>
-         """)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <code>100</code>
+        <desc>The request parameter is not valid.</desc>
+        <stat>fail</stat>
+      </emsResponse>
+      """)
     end)
 
     {:error, %Response{
@@ -209,12 +209,12 @@ defmodule ExSCEMSTest do
       |> assert_request_body(%{"customerId" => "1"})
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(200, """
-         <?xml version="1.0" encoding="UTF-8"?>
-         <emsResponse>
-           <customerId>3682</customerId>
-           <stat>ok</stat>
-         </emsResponse>
-         """)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <customerId>3682</customerId>
+        <stat>ok</stat>
+      </emsResponse>
+      """)
     end)
 
     {:ok, %{stat: "ok"}} = ExSCEMS.delete_customer(1, config)
@@ -226,13 +226,13 @@ defmodule ExSCEMSTest do
       |> assert_request_body(%{"customerId" => "1"})
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(200, """
-         <?xml version="1.0" encoding="UTF-8"?>
-         <emsResponse>
-           <code>519</code>
-           <desc>Customer not found for the given customerID.</desc>
-           <stat>fail</stat>
-         </emsResponse>
-         """)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <code>519</code>
+        <desc>Customer not found for the given customerID.</desc>
+        <stat>fail</stat>
+      </emsResponse>
+      """)
     end)
 
     {:error, %Response{
@@ -258,13 +258,13 @@ defmodule ExSCEMSTest do
       })
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(200, """
-         <?xml version="1.0" encoding="UTF-8"?>
-           <emsResponse>
-           <eid>d967c7ed-d783-466c-bfe0-96089ec93770</eid>
-           <entId>1</entId>
-           <stat>ok</stat>
-         </emsResponse>
-         """)
+      <?xml version="1.0" encoding="UTF-8"?>
+        <emsResponse>
+        <eid>d967c7ed-d783-466c-bfe0-96089ec93770</eid>
+        <entId>1</entId>
+        <stat>ok</stat>
+      </emsResponse>
+      """)
     end)
 
     {:ok, %Response{stat: "ok"}, 1, "d967c7ed-d783-466c-bfe0-96089ec93770"} =
@@ -286,13 +286,13 @@ defmodule ExSCEMSTest do
       |> assert_request_body(%{})
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(401, """
-         <?xml version="1.0" encoding="UTF-8"?>
-         <emsResponse>
-           <code>100</code>
-           <desc>The request parameter is not valid.</desc>
-           <stat>fail</stat>
-         </emsResponse>
-         """)
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <code>100</code>
+        <desc>The request parameter is not valid.</desc>
+        <stat>fail</stat>
+      </emsResponse>
+      """)
     end)
 
     {:error, %Response{

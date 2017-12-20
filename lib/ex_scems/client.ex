@@ -73,14 +73,14 @@ defmodule ExSCEMS.Client do
     map =
       body_xml
       |> xpath(
-           ~x"/emsResponse",
-           stat: ~x"./stat/text()"s,
-           # error
-           error_code: ~x"./code/text()"s,
-           error_desc: ~x"./desc/text()"s,
-           # search
-           total: ~x"./total/text()"s
-         )
+        ~x"/emsResponse",
+        stat: ~x"./stat/text()"s,
+        # error
+        error_code: ~x"./code/text()"s,
+        error_desc: ~x"./desc/text()"s,
+        # search
+        total: ~x"./total/text()"s
+      )
       |> Map.put(:body_xml, body_xml)
 
     struct(resp, map)
