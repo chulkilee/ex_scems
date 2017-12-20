@@ -243,6 +243,65 @@ defmodule ExSCEMSTest do
   end
 
   #
+  # Product
+  #
+
+  test "create_product - success", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "POST", "/createProduct.xml", fn conn ->
+      conn
+      |> assert_request_body(%{
+        "namespaceName" => "Default",
+        "productName" => "FooProduct",
+        "productVersion" => "2",
+        "productDescription" => "description",
+        "serviceAgreementID" => "2"
+      })
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+      <?xml version="1.0" encoding="UTF-8"?>
+        <emsResponse>
+        <productId>1</productId>
+        <stat>ok</stat>
+      </emsResponse>
+      """)
+    end)
+
+    {:ok, %Response{stat: "ok"}, 1} =
+      ExSCEMS.create_product(
+        [
+          namespaceName: "Default",
+          productName: "FooProduct",
+          productVersion: "2",
+          productDescription: "description",
+          serviceAgreementID: 2
+        ],
+        config
+      )
+  end
+
+  test "create_product - fail", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "POST", "/createProduct.xml", fn conn ->
+      conn
+      |> assert_request_body(%{})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(401, """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <code>100</code>
+        <desc>The request parameter is not valid.</desc>
+        <stat>fail</stat>
+      </emsResponse>
+      """)
+    end)
+
+    {:error, %Response{
+      error_code: "100",
+      error_desc: "The request parameter is not valid.",
+      stat: "fail"
+    }} = ExSCEMS.create_product([], config)
+  end
+
+  #
   # Entitlement
   #
 

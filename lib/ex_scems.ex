@@ -98,6 +98,20 @@ defmodule ExSCEMS do
   def delete_customer(id, config), do: post(config, "/deleteCustomerById.xml", customerId: id)
 
   #
+  # Product
+  #
+
+  @doc """
+  [Create Product](http://documentation.sentinelcloud.com/wsg/createProduct.htm)
+  """
+  def create_product(form, config) do
+    case post(config, "/createProduct.xml", form) do
+      {:ok, resp} -> {:ok, resp, xpath(resp.body_xml, ~x"//productId/text()"i)}
+      {:error, error} -> {:error, error}
+    end
+  end
+
+  #
   # Entitlement
   #
 
