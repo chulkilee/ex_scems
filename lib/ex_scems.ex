@@ -110,6 +110,17 @@ defmodule ExSCEMS do
     end
   end
 
+  @doc """
+  Retrieve details of a customer using exact customer name.
+  [Retrieve Customer Details by Name](http://documentation.sentinelcloud.com/wsg/getCustomerByCustomerNam.htm)
+  """
+  def search_customers_by_name(name, config) do
+    case get(config, "/getCustomerByCustomerName.xml", customerName: name) do
+      {:ok, resp} -> {:ok, resp, parse_customers(resp.body_xml)}
+      {:error, error} -> {:error, error}
+    end
+  end
+
   defp parse_customers(xml),
     do: parse_collection(xml, ~x"//customers", ~x"//customer"l, &Customer.parse_xml/1)
 
