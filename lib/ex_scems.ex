@@ -110,6 +110,18 @@ defmodule ExSCEMS do
     end
   end
 
+  @doc """
+  Retrieves customer details by using customer reference ID.
+
+  [Retrieve Customer by Customer Ref ID](http://documentation.sentinelcloud.com/wsg/getCustomerByCustomerRefId.htm)
+  """
+  def get_customer_by_customer_ref_id(id, config) do
+    case get(config, "/getCustomerByCustomerRefId.xml", customerRefId: id) do
+      {:ok, resp} -> {:ok, resp, Customer.parse_xml(resp.body_xml)}
+      {:error, error} -> {:error, error}
+    end
+  end
+
   #
   # Product
   #
