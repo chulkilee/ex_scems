@@ -7,7 +7,7 @@ defmodule ExSCEMS do
   import ExSCEMS.XMLUtil
 
   alias ExSCEMS.{Client, Config, Response}
-  alias ExSCEMS.Product
+  alias ExSCEMS.{Customer, Product}
 
   #
   # Request
@@ -97,6 +97,18 @@ defmodule ExSCEMS do
   """
   @spec delete_customer(String.t(), Config.t()) :: {:ok, Response.t()} | {:error, any}
   def delete_customer(id, config), do: post(config, "/deleteCustomerById.xml", customerId: id)
+
+  @doc """
+  Retrieve details for a customer using customer ID.
+
+  http://documentation.sentinelcloud.com/wsg/getCustomerById.htm
+  """
+  def get_customer_by_id(id, config) do
+    case get(config, "/getCustomerById.xml", customerId: id) do
+      {:ok, resp} -> {:ok, resp, Customer.parse_xml(resp.body_xml)}
+      {:error, error} -> {:error, error}
+    end
+  end
 
   #
   # Product

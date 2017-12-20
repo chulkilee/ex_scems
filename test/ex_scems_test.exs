@@ -3,7 +3,7 @@ defmodule ExSCEMSTest do
   doctest ExSCEMS
 
   alias ExSCEMS.{Config, Response}
-  alias ExSCEMS.Product
+  alias ExSCEMS.{Contact, Customer, Product}
 
   @session_id "FAKE_SESSION_ID"
 
@@ -241,6 +241,68 @@ defmodule ExSCEMSTest do
       error_desc: "Customer not found for the given customerID.",
       stat: "fail"
     }} = ExSCEMS.delete_customer(1, config)
+  end
+
+  test "get_customer_by_id - success", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "GET", "/getCustomerById.xml", fn conn ->
+      conn
+      |> assert_query(%{"customerId" => "123"})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <customer>
+          <contacts>
+            <contact>
+              <admin>false</admin>
+              <contactEmail>contact@example.com</contactEmail>
+              <contactId>129</contactId>
+              <contactName>TestContact</contactName>
+              <creationTime>1483228800000</creationTime>
+              <customerName>TestCustomer</customerName>
+              <modificationTime>1514764799000</modificationTime>
+              <status>false</status>
+            </contact>
+          </contacts>
+          <creationTime>1483228800000</creationTime>
+          <customerId>123</customerId>
+          <customerName>dummy-customer-name</customerName>
+          <customerRefId>dummy-customer-ref-id</customerRefId>
+          <desc>dummy-desc</desc>
+          <enabled>true</enabled>
+          <modificationTime>1514764799000</modificationTime>
+          <refId>dummy-ref-id</refId>
+          <timezone>(GMT) Greenwich Mean Time, : Dublin, Edinburgh, Lisbon, London</timezone>
+        </customer>
+        <stat>ok</stat>
+      </emsResponse>
+      """)
+    end)
+
+    {:ok, %{stat: "ok"}, customer} = ExSCEMS.get_customer_by_id(123, config)
+
+    expected = %Customer{
+      contacts: [
+        %Contact{
+          email: "contact@example.com",
+          id: 129,
+          name: "TestContact",
+          creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
+          modification_time: parse_iso8601_datetime!("2017-12-31T23:59:59.000Z")
+        }
+      ],
+      creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
+      id: 123,
+      name: "dummy-customer-name",
+      customer_ref_id: "dummy-customer-ref-id",
+      description: "dummy-desc",
+      enabled: true,
+      modification_time: parse_iso8601_datetime!("2017-12-31T23:59:59.000Z"),
+      ref_id: "dummy-ref-id",
+      timezone: "(GMT) Greenwich Mean Time, : Dublin, Edinburgh, Lisbon, London"
+    }
+
+    assert expected == customer
   end
 
   #
