@@ -243,6 +243,51 @@ defmodule ExSCEMSTest do
     }} = ExSCEMS.delete_customer(1, config)
   end
 
+  test "search_customers - success", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "GET", "/searchCustomers.xml", fn conn ->
+      conn
+      |> assert_query(%{"pageSize" => "1"})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <customers>
+          <customer>
+            <creationTime>1483228800000</creationTime>
+            <customerId>123</customerId>
+            <customerName>dummy-customer-name</customerName>
+            <customerRefId>dummy-customer-ref-id</customerRefId>
+            <desc>dummy-desc</desc>
+            <enabled>true</enabled>
+            <modificationTime>1514764799000</modificationTime>
+            <refId>dummy-ref-id</refId>
+            <timezone>(GMT) Greenwich Mean Time, : Dublin, Edinburgh, Lisbon, London</timezone>
+          </customer>
+        </customers>
+        <stat>ok</stat>
+        <total>2</total>
+      </emsResponse>
+      """)
+    end)
+
+    {:ok, %{stat: "ok"}, customers} = ExSCEMS.search_customers([pageSize: 1], config)
+
+    expected = %Customer{
+      contacts: nil,
+      creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
+      id: 123,
+      name: "dummy-customer-name",
+      customer_ref_id: "dummy-customer-ref-id",
+      description: "dummy-desc",
+      enabled: true,
+      modification_time: parse_iso8601_datetime!("2017-12-31T23:59:59.000Z"),
+      ref_id: "dummy-ref-id",
+      timezone: "(GMT) Greenwich Mean Time, : Dublin, Edinburgh, Lisbon, London"
+    }
+
+    assert [expected] == customers
+  end
+
   test "get_customer_by_id - success", %{bypass: bypass, config: config} do
     Bypass.expect_once(bypass, "GET", "/getCustomerById.xml", fn conn ->
       conn

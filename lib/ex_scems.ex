@@ -99,6 +99,21 @@ defmodule ExSCEMS do
   def delete_customer(id, config), do: post(config, "/deleteCustomerById.xml", customerId: id)
 
   @doc """
+  Search customers/view all customers for the given query parameters.
+
+  [Search Customers](http://documentation.sentinelcloud.com/wsg/searchCustomers.htm)
+  """
+  def search_customers(options \\ [], config) do
+    case get(config, "/searchCustomers.xml", options) do
+      {:ok, resp} -> {:ok, resp, parse_customers(resp.body_xml)}
+      {:error, error} -> {:error, error}
+    end
+  end
+
+  defp parse_customers(xml),
+    do: parse_collection(xml, ~x"//customers", ~x"//customer"l, &Customer.parse_xml/1)
+
+  @doc """
   Retrieve details for a customer using customer ID.
 
   http://documentation.sentinelcloud.com/wsg/getCustomerById.htm
