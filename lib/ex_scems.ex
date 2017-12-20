@@ -7,6 +7,7 @@ defmodule ExSCEMS do
   import ExSCEMS.XMLUtil
 
   alias ExSCEMS.{Client, Config, Response}
+  alias ExSCEMS.Product
 
   #
   # Request
@@ -107,6 +108,18 @@ defmodule ExSCEMS do
   def create_product(form, config) do
     case post(config, "/createProduct.xml", form) do
       {:ok, resp} -> {:ok, resp, xpath(resp.body_xml, ~x"//productId/text()"i)}
+      {:error, error} -> {:error, error}
+    end
+  end
+
+  @doc """
+  Retrieve the details of a product for a given product ID.
+
+  [Retrieve Product Details by productId](http://documentation.sentinelcloud.com/WSG/getProductById.htm)
+  """
+  def get_product_by_id(id, config) do
+    case get(config, "/getProductById.xml", productId: id) do
+      {:ok, resp} -> {:ok, resp, Product.parse_xml(resp.body_xml)}
       {:error, error} -> {:error, error}
     end
   end
