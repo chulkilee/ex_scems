@@ -243,6 +243,66 @@ defmodule ExSCEMSTest do
   end
 
   #
+  # Entitlement
+  #
+
+  test "create_entitlement - success", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "POST", "/createEntitlement.xml", fn conn ->
+      conn
+      |> assert_request_body(%{
+        "startDate" => "2017-01-01",
+        "endDate" => "2500-12-31",
+        "customerId" => "1",
+        "contactEmail" => "1@example.com",
+        "isRetail" => "false"
+      })
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+         <?xml version="1.0" encoding="UTF-8"?>
+           <emsResponse>
+           <eid>d967c7ed-d783-466c-bfe0-96089ec93770</eid>
+           <entId>1</entId>
+           <stat>ok</stat>
+         </emsResponse>
+         """)
+    end)
+
+    {:ok, %Response{stat: "ok"}, 1, "d967c7ed-d783-466c-bfe0-96089ec93770"} =
+      ExSCEMS.create_entitlement(
+        [
+          startDate: "2017-01-01",
+          endDate: "2500-12-31",
+          customerId: 1,
+          contactEmail: "1@example.com",
+          isRetail: false
+        ],
+        config
+      )
+  end
+
+  test "create_entitlement - fail", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "POST", "/createEntitlement.xml", fn conn ->
+      conn
+      |> assert_request_body(%{})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(401, """
+         <?xml version="1.0" encoding="UTF-8"?>
+         <emsResponse>
+           <code>100</code>
+           <desc>The request parameter is not valid.</desc>
+           <stat>fail</stat>
+         </emsResponse>
+         """)
+    end)
+
+    {:error, %Response{
+      error_code: "100",
+      error_desc: "The request parameter is not valid.",
+      stat: "fail"
+    }} = ExSCEMS.create_entitlement([], config)
+  end
+
+  #
   # Util
   #
 

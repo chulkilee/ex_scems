@@ -97,6 +97,30 @@ defmodule ExSCEMS do
   def delete_customer(id, config), do: post(config, "/deleteCustomerById.xml", customerId: id)
 
   #
+  # Entitlement
+  #
+
+  @doc """
+  Create an entitlement with the given parameters.
+
+  [Create Entitlement Using Parameters](http://documentation.sentinelcloud.com/wsg/createEntitlement.htm)
+  """
+  def create_entitlement(form, config) do
+    case post(config, "/createEntitlement.xml", form) do
+      {:ok, resp} ->
+        {
+          :ok,
+          resp,
+          xpath(resp.body_xml, ~x"//entId/text()"i),
+          xpath(resp.body_xml, ~x"//eid/text()"s)
+        }
+
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
+  #
   # XML
   #
 
