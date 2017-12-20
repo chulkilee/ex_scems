@@ -124,6 +124,18 @@ defmodule ExSCEMS do
     end
   end
 
+  @doc """
+  Retrieve product details for the given product name and version.
+
+  [Retrieve Product Details By Name and Version](http://documentation.sentinelcloud.com/WSG/getProductByNameAndVer.htm)
+  """
+  def get_product_by_name_and_version([name: name, version: version], config) do
+    case get(config, "/getProductByNameAndVer.xml", productName: name, productVersion: version) do
+      {:ok, resp} -> {:ok, resp, Product.parse_xml(resp.body_xml)}
+      {:error, error} -> {:error, error}
+    end
+  end
+
   #
   # Entitlement
   #

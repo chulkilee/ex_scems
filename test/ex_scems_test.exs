@@ -357,6 +357,62 @@ defmodule ExSCEMSTest do
     assert expected == product
   end
 
+  test "get_product_by_name_and_version - success", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "GET", "/getProductByNameAndVer.xml", fn conn ->
+      conn
+      |> assert_query(%{"productName" => "foo", "productVersion" => "bar"})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <product>
+          <creationTime>1483228800000</creationTime>
+          <deployed>true</deployed>
+          <desc>product-desc</desc>
+          <features>
+            <feature>
+              <id>20</id>
+              <name>feature-20</name>
+              <ver/>
+            </feature>
+          </features>
+          <id>18</id>
+          <lifeCycleStage>Complete</lifeCycleStage>
+          <modificationTime>1514764799000</modificationTime>
+          <name>TestProduct</name>
+          <namespaceId>2</namespaceId>
+          <namespaceName>TestNamespace</namespaceName>
+          <refId1>ref-id-1</refId1>
+          <refId2/>
+          <saId>1</saId>
+          <ver>6</ver>
+        </product>
+        <stat>ok</stat>
+      </emsResponse>
+      """)
+    end)
+
+    {:ok, %{stat: "ok"}, product} =
+      ExSCEMS.get_product_by_name_and_version([name: "foo", version: "bar"], config)
+
+    expected = %Product{
+      creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
+      deployed: true,
+      description: "product-desc",
+      id: 18,
+      life_cycle_stage: "Complete",
+      modification_time: parse_iso8601_datetime!("2017-12-31T23:59:59.000Z"),
+      name: "TestProduct",
+      namespace_id: 2,
+      namespace_name: "TestNamespace",
+      ref_id1: "ref-id-1",
+      ref_id2: "",
+      version: "6"
+    }
+
+    assert expected == product
+  end
+
   #
   # Entitlement
   #
