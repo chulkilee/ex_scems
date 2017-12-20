@@ -113,6 +113,21 @@ defmodule ExSCEMS do
   end
 
   @doc """
+  Retrieve the list of products against the query parameters.
+
+  [Search Products](http://documentation.sentinelcloud.com/WSG/searchProducts.htm)
+  """
+  def search_products(options, config) do
+    case get(config, "/searchProducts.xml", options) do
+      {:ok, resp} -> {:ok, resp, parse_products(resp.body_xml)}
+      {:error, error} -> {:error, error}
+    end
+  end
+
+  defp parse_products(xml),
+    do: parse_collection(xml, ~x"//products", ~x"//product"l, &Product.parse_xml/1)
+
+  @doc """
   Retrieve the details of a product for a given product ID.
 
   [Retrieve Product Details by productId](http://documentation.sentinelcloud.com/WSG/getProductById.htm)
