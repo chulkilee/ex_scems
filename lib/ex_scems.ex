@@ -224,4 +224,18 @@ defmodule ExSCEMS do
         {:error, error}
     end
   end
+
+  #
+  # LineItem
+  #
+
+  @doc """
+  [Add a Product to an Entitlement](http://documentation.sentinelcloud.com/WSG/addEntitlementItem.htm)
+  """
+  def create_line_item(options, config) do
+    case post(config, "/addEntitlementItem.xml", options) do
+      {:ok, resp} -> {:ok, resp, xpath(resp.body_xml, ~x"//id/text()"i)}
+      {:error, error} -> {:error, error}
+    end
+  end
 end

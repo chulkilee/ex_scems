@@ -759,6 +759,59 @@ defmodule ExSCEMSTest do
   end
 
   #
+  # LineItem
+  #
+
+  test "create_line_item - success", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "POST", "/addEntitlementItem.xml", fn conn ->
+      conn
+      |> assert_request_body(%{
+        "entId" => "1",
+        "productId" => "2"
+      })
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+      <?xml version="1.0" encoding="UTF-8"?>
+        <emsResponse>
+        <id>1</id>
+        <stat>ok</stat>
+      </emsResponse>
+      """)
+    end)
+
+    {:ok, %Response{stat: "ok"}, 1} =
+      ExSCEMS.create_line_item(
+        [
+          entId: 1,
+          productId: 2
+        ],
+        config
+      )
+  end
+
+  test "create_line_item - fail", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "POST", "/addEntitlementItem.xml", fn conn ->
+      conn
+      |> assert_request_body(%{})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(401, """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <code>100</code>
+        <desc>The request parameter is not valid.</desc>
+        <stat>fail</stat>
+      </emsResponse>
+      """)
+    end)
+
+    {:error, %Response{
+      error_code: "100",
+      error_desc: "The request parameter is not valid.",
+      stat: "fail"
+    }} = ExSCEMS.create_line_item([], config)
+  end
+
+  #
   # Util
   #
 
