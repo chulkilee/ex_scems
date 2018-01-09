@@ -3,6 +3,9 @@ defmodule ExSCEMS.XMLUtil do
 
   def transform_to_string(sweet_xpath), do: transform_by(sweet_xpath, &xml_text/1)
 
+  def transform_to_date(sweet_xpath),
+    do: transform_by(sweet_xpath, fn xml -> xml |> xml_text() |> parse_date!() end)
+
   def transform_to_datetime(sweet_xpath),
     do: transform_by(sweet_xpath, fn xml -> xml |> xml_text() |> parse_timestamp!() end)
 
@@ -31,6 +34,9 @@ defmodule ExSCEMS.XMLUtil do
   def parse_boolean!(nil), do: nil
   def parse_boolean!("true"), do: true
   def parse_boolean!("false"), do: false
+
+  def parse_date!(nil), do: nil
+  def parse_date!(val), do: Date.from_iso8601!(val)
 
   def parse_timestamp!(nil), do: nil
 

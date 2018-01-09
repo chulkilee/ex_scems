@@ -3,7 +3,7 @@ defmodule ExSCEMSTest do
   doctest ExSCEMS
 
   alias ExSCEMS.{Config, Response}
-  alias ExSCEMS.{Contact, Customer, Product}
+  alias ExSCEMS.{Contact, Customer, Entitlement, LineItem, Product}
 
   @session_id "FAKE_SESSION_ID"
 
@@ -758,6 +758,212 @@ defmodule ExSCEMSTest do
     }} = ExSCEMS.create_entitlement([], config)
   end
 
+  test "search_entitlements - success", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "GET", "/searchEntitlements.xml", fn conn ->
+      conn
+      |> assert_query(%{"pageSize" => "1"})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <stat>ok</stat>
+        <entitlements>
+          <entitlement>
+            <entId>1045</entId>
+            <eid>0c7532****</eid>
+            <entitlementType>enterprise</entitlementType>
+            <startDate>2013-12-10</startDate>
+            <endDate>2500-12-31</endDate>
+            <customer>
+              <customerId>123</customerId>
+              <customerName>dummy-customer-name</customerName>
+              <customerRefId>dummy-customer-ref-id</customerRefId>
+            </customer>
+            <contact>
+              <contactId>150</contactId>
+              <contactEmailId>contact@example.com</contactEmailId>
+            </contact>
+            <alternateEmailId/>
+            <state>3</state>
+            <status>0</status>
+            <refId1>ent_test_133</refId1>
+            <refId2/>
+            <deploymentType>Cloud</deploymentType>
+            <creationTime>1483228800000</creationTime>
+            <modificationTime>1514764799000</modificationTime>
+            <timezone>(GMT) Greenwich Mean Time, : Dublin, Edinburgh, Lisbon, London</timezone>
+          </entitlement>
+        </entitlements>
+      </emsResponse>
+      """)
+    end)
+
+    {:ok, %{stat: "ok"}, entitlements} = ExSCEMS.search_entitlements([pageSize: 1], config)
+
+    expected = %Entitlement{
+      id: 1045,
+      eid: "0c7532****",
+      start_date: ~D[2013-12-10],
+      end_date: ~D[2500-12-31],
+      customer: %Customer{
+        id: 123,
+        name: "dummy-customer-name",
+        customer_ref_id: "dummy-customer-ref-id"
+      },
+      contact: %Contact{
+        id: 150,
+        email: "contact@example.com"
+      },
+      state: 3,
+      status: 0,
+      ref_id1: "ent_test_133",
+      ref_id2: "",
+      deployment_type: "Cloud",
+      line_items: nil,
+      creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
+      modification_time: parse_iso8601_datetime!("2017-12-31T23:59:59.000Z"),
+      timezone: "(GMT) Greenwich Mean Time, : Dublin, Edinburgh, Lisbon, London"
+    }
+
+    assert [expected] == entitlements
+  end
+
+  test "get_entitlement_by_id - success", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "GET", "/getEntitlementDetailsById.xml", fn conn ->
+      conn
+      |> assert_query(%{"entId" => "1045", "fetchCompleteEID" => "true"})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <stat>ok</stat>
+        <entitlement>
+          <entId>1045</entId>
+          <eid>0c7532a3-ba97-4310-89c8-77b8e0787e6d</eid>
+          <entitlementType>enterprise</entitlementType>
+          <startDate>2013-12-10</startDate>
+          <endDate>2500-12-31</endDate>
+          <customer>
+            <customerId>123</customerId>
+            <customerName>dummy-customer-name</customerName>
+            <customerRefId>dummy-customer-ref-id</customerRefId>
+          </customer>
+          <contact>
+            <contactId>150</contactId>
+            <contactEmailId>contact@example.com</contactEmailId>
+          </contact>
+          <alternateEmailId/>
+          <state>3</state>
+          <status>0</status>
+          <refId1>ent_test_133</refId1>
+          <refId2/>
+          <deploymentType>Cloud</deploymentType>
+          <lineItems>
+            <lineItem>
+              <lineItemId>234</lineItemId>
+              <lineItemName>TestProduct</lineItemName>
+              <status>1</status>
+              <type>product</type>
+              <enforcement>
+                <enforcementId>1</enforcementId>
+                <enforcementName>Sentinel Cloud</enforcementName>
+                <enforcementVersion>3.6.0</enforcementVersion>
+              </enforcement>
+              <numberOfUsers>1</numberOfUsers>
+              <itemProduct>
+                <itemFeatureLicenseModels>
+                  <itemFeatureLicenseModel>
+                    <entFtrLMId>56330</entFtrLMId>
+                    <feature>
+                      <id>20</id>
+                      <featureName>feature-20</featureName>
+                      <featureId>4</featureId>
+                    </feature>
+                    <licenseModel>
+                      <licenseModelId>6</licenseModelId>
+                      <licenseModelName>TestModel</licenseModelName>
+                    </licenseModel>
+                  </itemFeatureLicenseModel>
+                </itemFeatureLicenseModels>
+                <product>
+                  <productId>55</productId>
+                  <productName>TestProduct</productName>
+                  <productVersion>2</productVersion>
+                  <refId1>product-ref-id1</refId1>
+                  <refId2/>
+                </product>
+                <itemServiceAgreement>
+                    <entProductSAId>1166</entProductSAId>
+                    <serviceAgreement>
+                    <serviceAgreementId>1</serviceAgreementId>
+                    <serviceAgreementName>Service Agreement Template</serviceAgreementName>
+                  </serviceAgreement>
+                </itemServiceAgreement>
+              </itemProduct>
+            </lineItem>
+          </lineItems>
+          <creationTime>1483228800000</creationTime>
+          <modificationTime>1514764799000</modificationTime>
+          <timezone>(GMT) Greenwich Mean Time, : Dublin, Edinburgh, Lisbon, London</timezone>
+        </entitlement>
+      </emsResponse>
+      """)
+    end)
+
+    {:ok, %Response{stat: "ok"}, ent} =
+      ExSCEMS.get_entitlement_by_id(1045, [fetchCompleteEID: true], config)
+
+    expected = %Entitlement{
+      id: 1045,
+      eid: "0c7532a3-ba97-4310-89c8-77b8e0787e6d",
+      start_date: ~D[2013-12-10],
+      end_date: ~D[2500-12-31],
+      customer: %Customer{
+        id: 123,
+        name: "dummy-customer-name",
+        customer_ref_id: "dummy-customer-ref-id"
+      },
+      contact: %Contact{
+        id: 150,
+        email: "contact@example.com"
+      },
+      state: 3,
+      status: 0,
+      ref_id1: "ent_test_133",
+      ref_id2: "",
+      deployment_type: "Cloud",
+      line_items: [
+        %LineItem{
+          id: 234,
+          status: 1,
+          number_of_users: 1,
+          feature_license_models: [
+            %{
+              ent_ftr_lm_id: 56330,
+              feature_id: 4,
+              feature_name: "feature-20",
+              ftr_id: 20,
+              license_model_id: 6,
+              license_model_name: "TestModel"
+            }
+          ],
+          product: %Product{
+            id: 55,
+            name: "TestProduct",
+            version: "2",
+            ref_id1: "product-ref-id1",
+            ref_id2: ""
+          }
+        }
+      ],
+      creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
+      modification_time: parse_iso8601_datetime!("2017-12-31T23:59:59.000Z"),
+      timezone: "(GMT) Greenwich Mean Time, : Dublin, Edinburgh, Lisbon, London"
+    }
+
+    assert expected == ent
+  end
+
   #
   # LineItem
   #
@@ -809,6 +1015,203 @@ defmodule ExSCEMSTest do
       error_desc: "The request parameter is not valid.",
       stat: "fail"
     }} = ExSCEMS.create_line_item([], config)
+  end
+
+  test "search_line_items - success", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "GET", "/getEntitlementItemByCriteria.xml", fn conn ->
+      conn
+      |> assert_query(%{"lastModified" => "1452556494000"})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+      <stat>ok</stat>
+      <lineItems>
+        <lineItem>
+          <lineItemId>234</lineItemId>
+          <lineItemName>TestProduct</lineItemName>
+          <status>1</status>
+          <type>service</type>
+          <enforcement>
+            <enforcementId>1</enforcementId>
+            <enforcementName>Sentinel Cloud</enforcementName>
+            <enforcementVersion>3.6.0</enforcementVersion>
+          </enforcement>
+          <entitlement>
+            <entId>3966</entId>
+            <eid>6f13de****</eid>
+            <timezone>(GMT) Greenwich Mean Time, : Dublin, Edinburgh, Lisbon, London</timezone>
+          </entitlement>
+          <numberOfUsers>1</numberOfUsers>
+          <itemProduct>
+            <itemFeatureLicenseModels>
+              <itemFeatureLicenseModel>
+                <entFtrLMId>56330</entFtrLMId>
+                <feature>
+                  <id>20</id>
+                  <featureName>feature-20</featureName>
+                  <featureId>4</featureId>
+                </feature>
+                <licenseModel>
+                  <licenseModelId>6</licenseModelId>
+                  <licenseModelName>TestModel</licenseModelName>
+                </licenseModel>
+              </itemFeatureLicenseModel>
+            </itemFeatureLicenseModels>
+            <product>
+              <productId>55</productId>
+              <productName>TestProduct</productName>
+              <productVersion>2</productVersion>
+              <refId1>product-ref-id1</refId1>
+              <refId2/>
+            </product>
+            <itemServiceAgreement>
+              <entProductSAId>4679</entProductSAId>
+              <serviceAgreement>
+                <serviceAgreementId>1</serviceAgreementId>
+                <serviceAgreementName>Service Agreement Template</serviceAgreementName>
+              </serviceAgreement>
+            </itemServiceAgreement>
+          </itemProduct>
+          <creationTime>1483228800000</creationTime>
+          <modificationTime>1514764799000</modificationTime>
+        </lineItem>
+      </lineItems>
+      </emsResponse>
+      """)
+    end)
+
+    {:ok, %{stat: "ok"}, line_items} =
+      ExSCEMS.search_line_items([lastModified: 1_452_556_494_000], config)
+
+    expected = %LineItem{
+      id: 234,
+      status: 1,
+      entitlement: %Entitlement{
+        id: 3966,
+        eid: "6f13de****",
+        timezone: "(GMT) Greenwich Mean Time, : Dublin, Edinburgh, Lisbon, London"
+      },
+      number_of_users: 1,
+      feature_license_models: [
+        %{
+          ent_ftr_lm_id: 56330,
+          feature_id: 4,
+          feature_name: "feature-20",
+          ftr_id: 20,
+          license_model_id: 6,
+          license_model_name: "TestModel"
+        }
+      ],
+      product: %Product{
+        id: 55,
+        name: "TestProduct",
+        version: "2",
+        ref_id1: "product-ref-id1",
+        ref_id2: ""
+      },
+      creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
+      modification_time: parse_iso8601_datetime!("2017-12-31T23:59:59.000Z")
+    }
+
+    assert [expected] == line_items
+  end
+
+  test "get_line_item_by_id - success", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "GET", "/getEntitlementItemById.xml", fn conn ->
+      conn
+      |> assert_query(%{"lineItemId" => "234"})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+      <stat>ok</stat>
+      <lineItem>
+        <lineItemId>234</lineItemId>
+        <lineItemName>TestProduct</lineItemName>
+        <status>1</status>
+        <type>service</type>
+        <enforcement>
+          <enforcementId>1</enforcementId>
+          <enforcementName>Sentinel Cloud</enforcementName>
+          <enforcementVersion>3.6.0</enforcementVersion>
+        </enforcement>
+        <entitlement>
+          <entId>3966</entId>
+          <eid>6f13de****</eid>
+          <timezone>(GMT) Greenwich Mean Time, : Dublin, Edinburgh, Lisbon, London</timezone>
+        </entitlement>
+        <numberOfUsers>1</numberOfUsers>
+        <itemProduct>
+          <itemFeatureLicenseModels>
+            <itemFeatureLicenseModel>
+              <entFtrLMId>56330</entFtrLMId>
+              <feature>
+                <id>20</id>
+                <featureName>feature-20</featureName>
+                <featureId>4</featureId>
+              </feature>
+              <licenseModel>
+                <licenseModelId>6</licenseModelId>
+                <licenseModelName>TestModel</licenseModelName>
+              </licenseModel>
+            </itemFeatureLicenseModel>
+          </itemFeatureLicenseModels>
+          <product>
+            <productId>55</productId>
+            <productName>TestProduct</productName>
+            <productVersion>2</productVersion>
+            <refId1>product-ref-id1</refId1>
+            <refId2/>
+          </product>
+          <itemServiceAgreement>
+            <entProductSAId>4679</entProductSAId>
+            <serviceAgreement>
+              <serviceAgreementId>1</serviceAgreementId>
+              <serviceAgreementName>Service Agreement Template</serviceAgreementName>
+            </serviceAgreement>
+          </itemServiceAgreement>
+        </itemProduct>
+        <creationTime>1483228800000</creationTime>
+        <modificationTime>1514764799000</modificationTime>
+      </lineItem>
+      </emsResponse>
+      """)
+    end)
+
+    {:ok, %{stat: "ok"}, line_item} = ExSCEMS.get_line_item_by_id(234, config)
+
+    expected = %LineItem{
+      id: 234,
+      status: 1,
+      entitlement: %Entitlement{
+        id: 3966,
+        eid: "6f13de****",
+        timezone: "(GMT) Greenwich Mean Time, : Dublin, Edinburgh, Lisbon, London"
+      },
+      number_of_users: 1,
+      feature_license_models: [
+        %{
+          ent_ftr_lm_id: 56330,
+          feature_id: 4,
+          feature_name: "feature-20",
+          ftr_id: 20,
+          license_model_id: 6,
+          license_model_name: "TestModel"
+        }
+      ],
+      product: %Product{
+        id: 55,
+        name: "TestProduct",
+        version: "2",
+        ref_id1: "product-ref-id1",
+        ref_id2: ""
+      },
+      creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
+      modification_time: parse_iso8601_datetime!("2017-12-31T23:59:59.000Z")
+    }
+
+    assert expected == line_item
   end
 
   #

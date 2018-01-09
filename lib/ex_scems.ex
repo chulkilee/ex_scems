@@ -7,7 +7,7 @@ defmodule ExSCEMS do
   import ExSCEMS.XMLUtil
 
   alias ExSCEMS.{Client, Config, Response}
-  alias ExSCEMS.{Customer, Product}
+  alias ExSCEMS.{Customer, Entitlement, LineItem, Product}
 
   #
   # Request
@@ -225,6 +225,42 @@ defmodule ExSCEMS do
     end
   end
 
+  @doc """
+  Search entitlements by the given query parameters
+
+  [Search Entitlements](http://documentation.sentinelcloud.com/WSG/searchEntitlements.htm)
+  """
+  def search_entitlements(options, config) do
+    case get(config, "/searchEntitlements.xml", options) do
+      {:ok, resp} ->
+        {
+          :ok,
+          resp,
+          parse_collection(
+            resp.body_xml,
+            ~x"//entitlements",
+            ~x"//entitlement"l,
+            &Entitlement.parse_xml/1
+          )
+        }
+
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
+  @doc """
+  Retrieves the list of line items, with product(s), features(s), and license model, for a given entitlement ID.
+
+  [Retrieve Details of an Entitlement](http://documentation.sentinelcloud.com/wsg/getEntitlementDetailsbyID.htm)
+  """
+  def get_entitlement_by_id(id, options, config) do
+    case get(config, "/getEntitlementDetailsById.xml", Keyword.put_new(options, :entId, id)) do
+      {:ok, resp} -> {:ok, resp, Entitlement.parse_xml(resp.body_xml)}
+      {:error, error} -> {:error, error}
+    end
+  end
+
   #
   # LineItem
   #
@@ -235,6 +271,42 @@ defmodule ExSCEMS do
   def create_line_item(options, config) do
     case post(config, "/addEntitlementItem.xml", options) do
       {:ok, resp} -> {:ok, resp, xpath(resp.body_xml, ~x"//id/text()"i)}
+      {:error, error} -> {:error, error}
+    end
+  end
+
+  @doc """
+  Retrieves line Item details based on the specified criteria.
+
+  [Retrieve Line Item Details By Criteria](http://documentation.sentinelcloud.com/WSG/getEntitlementItemByCriteria.htm)
+  """
+  def search_line_items(options, config) do
+    case get(config, "/getEntitlementItemByCriteria.xml", options) do
+      {:ok, resp} ->
+        {
+          :ok,
+          resp,
+          parse_collection(
+            resp.body_xml,
+            ~x"//lineItems",
+            ~x"//lineItem"l,
+            &LineItem.parse_xml/1
+          )
+        }
+
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
+  @doc """
+  Retrieve entitlement line item details by lineItemId.
+
+  [Retrieve Entitlement Line Item Details](http://documentation.sentinelcloud.com/WSG/getEntitlementItemById.htm)
+  """
+  def get_line_item_by_id(id, config) do
+    case get(config, "/getEntitlementItemById.xml", lineItemId: id) do
+      {:ok, resp} -> {:ok, resp, LineItem.parse_xml(resp.body_xml)}
       {:error, error} -> {:error, error}
     end
   end
