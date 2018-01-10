@@ -320,4 +320,10 @@ defmodule ExSCEMS do
   [Remove Entitlement Line Item](http://documentation.sentinelcloud.com/WSG/removeEntitlementItem.htm)
   """
   def delete_line_item(id, config), do: post(config, "/removeEntitlementItem.xml", lineItemId: id)
+
+  @doc """
+  [Update Line Item Feature Association](http://documentation.sentinelcloud.com/WSG/updateFeatureLineItemAssociation.htm)
+  """
+  def update_line_item_feature_assoc(xml_string, config),
+    do: post(config, "/updateFeatureLineItemAssociation.xml", featureDetails: xml_string)
 end
