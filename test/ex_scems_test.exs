@@ -1214,6 +1214,32 @@ defmodule ExSCEMSTest do
     assert expected == line_item
   end
 
+  test "update_line_item - success", %{bypass: bypass, config: config} do
+    Bypass.expect_once(bypass, "POST", "/updateEntitlementItem.xml", fn conn ->
+      conn
+      |> assert_request_body(%{
+        "lineItemId" => "1",
+        "refId1" => "foo"
+      })
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <emsResponse>
+        <stat>ok</stat>
+      </emsResponse>
+      """)
+    end)
+
+    {:ok, %Response{stat: "ok"}} =
+      ExSCEMS.update_line_item(
+        [
+          lineItemId: 1,
+          refId1: "foo"
+        ],
+        config
+      )
+  end
+
   #
   # Util
   #

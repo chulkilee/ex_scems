@@ -310,4 +310,9 @@ defmodule ExSCEMS do
       {:error, error} -> {:error, error}
     end
   end
+
+  @doc """
+  [Update Entitlement Line Items](http://documentation.sentinelcloud.com/WSG/updateEntitlementItem.htm)
+  """
+  def update_line_item(form, config), do: post(config, "/updateEntitlementItem.xml", form)
 end
