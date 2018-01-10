@@ -334,8 +334,24 @@ defmodule ExSCEMS do
     do: post(config, "/updateFeatureLineItemAssociation.xml", featureDetails: xml_string)
 
   @doc """
+  [Retrieve Entitlement Line Item Feature License Model Association](http://documentation.sentinelcloud.com/WSG/retrieveLineItemFeatureLMAssociation.htm)
+  """
+  def get_line_item_feature_lm_assoc(id, config),
+    do: get(config, "/retrieveLineItemFeatureLMAssociation.xml", lineItemId: id)
+
+  @doc """
   [Update Line Item Feature License Model Association](http://documentation.sentinelcloud.com/WSG/updateLineItemFeatureLMAssociation.htm)
   """
   def update_line_item_feature_lm_assoc(xml_string, config),
     do: post(config, "/updateLineItemFeatureLMAssociation.xml", featureLMDetails: xml_string)
+
+  #
+  # Feature
+  #
+
+  @doc """
+  [Retrieve Feature By Criteria](http://documentation.sentinelcloud.com/WSG/featureList.htm)
+  """
+  # TODO: parse
+  def create_feature(form, config), do: post(config, "/featureList.xml", form)
 end
