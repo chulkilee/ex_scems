@@ -322,6 +322,12 @@ defmodule ExSCEMS do
   def delete_line_item(id, config), do: post(config, "/removeEntitlementItem.xml", lineItemId: id)
 
   @doc """
+  [Retrieve Entitlement Line Item Feature Association](http://documentation.sentinelcloud.com/WSG/retrieveFeatureLineItemAssociation.htm)
+  """
+  def get_line_item_feature_assoc(id, config),
+    do: get(config, "/retrieveFeatureLineItemAssociation.xml", lineItemId: id)
+
+  @doc """
   [Update Line Item Feature Association](http://documentation.sentinelcloud.com/WSG/updateFeatureLineItemAssociation.htm)
   """
   def update_line_item_feature_assoc(xml_string, config),

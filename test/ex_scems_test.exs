@@ -1256,6 +1256,49 @@ defmodule ExSCEMSTest do
     {:ok, %Response{stat: "ok"}} = ExSCEMS.delete_line_item(1, config)
   end
 
+  test "get_line_item_feature_assoc - success", %{bypass: bypass, config: config} do
+    xml_str = """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <emsResponse>
+      <stat>ok</stat>
+      <lineItem>
+        <lineItemId>7938</lineItemId>
+        <itemProduct>
+          <itemFeatureLicenseModels>
+            <itemFeatureLicenseModel>
+              <entFtrLMId>56330</entFtrLMId>
+              <feature>
+                <id>20</id>
+                <featureName>feature-20</featureName>
+                <featureId>4</featureId>
+              </feature>
+              <licenseModel>
+                <licenseModelId>6</licenseModelId>
+                <licenseModelName>TestModel</licenseModelName>
+              </licenseModel>
+            </itemFeatureLicenseModel>
+          </itemFeatureLicenseModels>
+          <product>
+            <productId>55</productId>
+            <productName>TestProduct</productName>
+            <productVersion>2</productVersion>
+          </product>
+        </itemProduct>
+      </lineItem>
+    </emsResponse>
+    """
+
+    Bypass.expect_once(bypass, "GET", "/retrieveFeatureLineItemAssociation.xml", fn conn ->
+      conn
+      |> assert_query(%{"lineItemId" => "7938"})
+      |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
+      |> Plug.Conn.resp(200, xml_str)
+    end)
+
+    {:ok, %Response{stat: "ok", body: ^xml_str}} =
+      ExSCEMS.get_line_item_feature_assoc(7938, config)
+  end
+
   test "update_line_item_feature_assoc - success", %{bypass: bypass, config: config} do
     Bypass.expect_once(bypass, "POST", "/updateFeatureLineItemAssociation.xml", fn conn ->
       conn
