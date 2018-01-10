@@ -495,7 +495,7 @@ defmodule ExSCEMSTest do
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(200, """
       <?xml version="1.0" encoding="UTF-8"?>
-        <emsResponse>
+      <emsResponse>
         <productId>1</productId>
         <stat>ok</stat>
       </emsResponse>
@@ -715,7 +715,7 @@ defmodule ExSCEMSTest do
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(200, """
       <?xml version="1.0" encoding="UTF-8"?>
-        <emsResponse>
+      <emsResponse>
         <eid>d967c7ed-d783-466c-bfe0-96089ec93770</eid>
         <entId>1</entId>
         <stat>ok</stat>
@@ -978,7 +978,7 @@ defmodule ExSCEMSTest do
       |> Plug.Conn.put_resp_header("Content-Type", "application/xml;charset=UTF-8")
       |> Plug.Conn.resp(200, """
       <?xml version="1.0" encoding="UTF-8"?>
-        <emsResponse>
+      <emsResponse>
         <id>1</id>
         <stat>ok</stat>
       </emsResponse>
