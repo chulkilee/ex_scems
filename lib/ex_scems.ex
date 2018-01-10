@@ -326,4 +326,10 @@ defmodule ExSCEMS do
   """
   def update_line_item_feature_assoc(xml_string, config),
     do: post(config, "/updateFeatureLineItemAssociation.xml", featureDetails: xml_string)
+
+  @doc """
+  [Update Line Item Feature License Model Association](http://documentation.sentinelcloud.com/WSG/updateLineItemFeatureLMAssociation.htm)
+  """
+  def update_line_item_feature_lm_assoc(xml_string, config),
+    do: post(config, "/updateLineItemFeatureLMAssociation.xml", featureLMDetails: xml_string)
 end
