@@ -2,7 +2,7 @@ defmodule ExSCEMSTest do
   use ExUnit.Case, async: true
   doctest ExSCEMS
 
-  alias ExSCEMS.{Config, Response}
+  alias ExSCEMS.Response
   alias ExSCEMS.{Contact, Customer, Entitlement, LineItem, Product}
 
   @session_id "FAKE_SESSION_ID"
@@ -10,12 +10,9 @@ defmodule ExSCEMSTest do
   setup do
     bypass = Bypass.open()
 
-    config = %Config{
-      endpoint: "http://127.0.0.1:#{bypass.port}",
-      session_id: @session_id
-    }
+    client = ExSCEMS.build_client("http://127.0.0.1:#{bypass.port}", @session_id)
 
-    {:ok, bypass: bypass, config: config}
+    {:ok, bypass: bypass, client: client}
   end
 
   #
@@ -160,7 +157,7 @@ defmodule ExSCEMSTest do
   # Customer
   #
 
-  test "create_customer - success", %{bypass: bypass, config: config} do
+  test "create_customer - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/createCustomer.xml", fn conn ->
       conn
       |> assert_request_body(%{
@@ -180,14 +177,14 @@ defmodule ExSCEMSTest do
 
     {:ok, %Response{stat: "ok"}, 3682} =
       ExSCEMS.create_customer(
-        config,
+        client,
         customerName: "foo",
         isEnabled: true,
         customerRefIdType: "guid"
       )
   end
 
-  test "create_customer - fail", %{bypass: bypass, config: config} do
+  test "create_customer - fail", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/createCustomer.xml", fn conn ->
       conn
       |> assert_request_body(%{})
@@ -207,10 +204,10 @@ defmodule ExSCEMSTest do
        error_code: "100",
        error_desc: "The request parameter is not valid.",
        stat: "fail"
-     }} = ExSCEMS.create_customer(config, [])
+     }} = ExSCEMS.create_customer(client, [])
   end
 
-  test "delete_customer - success", %{bypass: bypass, config: config} do
+  test "delete_customer - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/deleteCustomerById.xml", fn conn ->
       conn
       |> assert_request_body(%{"customerId" => "1"})
@@ -224,10 +221,10 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}} = ExSCEMS.delete_customer(config, 1)
+    {:ok, %{stat: "ok"}} = ExSCEMS.delete_customer(client, 1)
   end
 
-  test "delete_customer - fail", %{bypass: bypass, config: config} do
+  test "delete_customer - fail", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/deleteCustomerById.xml", fn conn ->
       conn
       |> assert_request_body(%{"customerId" => "1"})
@@ -247,10 +244,10 @@ defmodule ExSCEMSTest do
        error_code: "519",
        error_desc: "Customer not found for the given customerID.",
        stat: "fail"
-     }} = ExSCEMS.delete_customer(config, 1)
+     }} = ExSCEMS.delete_customer(client, 1)
   end
 
-  test "search_customers - success", %{bypass: bypass, config: config} do
+  test "search_customers - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "GET", "/searchCustomers.xml", fn conn ->
       conn
       |> assert_query(%{"pageSize" => "1"})
@@ -277,7 +274,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, customers} = ExSCEMS.search_customers(config, pageSize: 1)
+    {:ok, %{stat: "ok"}, customers} = ExSCEMS.search_customers(client, pageSize: 1)
 
     expected = %Customer{
       contacts: nil,
@@ -295,7 +292,7 @@ defmodule ExSCEMSTest do
     assert [expected] == customers
   end
 
-  test "search_customers_by_name - success", %{bypass: bypass, config: config} do
+  test "search_customers_by_name - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "GET", "/getCustomerByCustomerName.xml", fn conn ->
       conn
       |> assert_query(%{"customerName" => "foo"})
@@ -334,7 +331,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, customers} = ExSCEMS.search_customers_by_name(config, "foo")
+    {:ok, %{stat: "ok"}, customers} = ExSCEMS.search_customers_by_name(client, "foo")
 
     expected = %Customer{
       contacts: [
@@ -360,7 +357,7 @@ defmodule ExSCEMSTest do
     assert [expected] == customers
   end
 
-  test "get_customer_by_id - success", %{bypass: bypass, config: config} do
+  test "get_customer_by_id - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "GET", "/getCustomerById.xml", fn conn ->
       conn
       |> assert_query(%{"customerId" => "123"})
@@ -396,7 +393,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, customer} = ExSCEMS.get_customer_by_id(config, 123)
+    {:ok, %{stat: "ok"}, customer} = ExSCEMS.get_customer_by_id(client, 123)
 
     expected = %Customer{
       contacts: [
@@ -422,7 +419,7 @@ defmodule ExSCEMSTest do
     assert expected == customer
   end
 
-  test "get_customer_by_customer_ref_id - success", %{bypass: bypass, config: config} do
+  test "get_customer_by_customer_ref_id - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "GET", "/getCustomerByCustomerRefId.xml", fn conn ->
       conn
       |> assert_query(%{"customerRefId" => "dummy-customer-ref-id"})
@@ -459,7 +456,7 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %{stat: "ok"}, customer} =
-      ExSCEMS.get_customer_by_customer_ref_id(config, "dummy-customer-ref-id")
+      ExSCEMS.get_customer_by_customer_ref_id(client, "dummy-customer-ref-id")
 
     expected = %Customer{
       contacts: [
@@ -489,7 +486,7 @@ defmodule ExSCEMSTest do
   # Product
   #
 
-  test "create_product - success", %{bypass: bypass, config: config} do
+  test "create_product - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/createProduct.xml", fn conn ->
       conn
       |> assert_request_body(%{
@@ -511,7 +508,7 @@ defmodule ExSCEMSTest do
 
     {:ok, %Response{stat: "ok"}, 1} =
       ExSCEMS.create_product(
-        config,
+        client,
         namespaceName: "Default",
         productName: "FooProduct",
         productVersion: "2",
@@ -520,7 +517,7 @@ defmodule ExSCEMSTest do
       )
   end
 
-  test "create_product - fail", %{bypass: bypass, config: config} do
+  test "create_product - fail", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/createProduct.xml", fn conn ->
       conn
       |> assert_request_body(%{})
@@ -540,10 +537,10 @@ defmodule ExSCEMSTest do
        error_code: "100",
        error_desc: "The request parameter is not valid.",
        stat: "fail"
-     }} = ExSCEMS.create_product(config, [])
+     }} = ExSCEMS.create_product(client, [])
   end
 
-  test "search_products - success", %{bypass: bypass, config: config} do
+  test "search_products - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "GET", "/searchProducts.xml", fn conn ->
       conn
       |> assert_query(%{"pageSize" => "1"})
@@ -573,7 +570,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, products} = ExSCEMS.search_products(config, pageSize: 1)
+    {:ok, %{stat: "ok"}, products} = ExSCEMS.search_products(client, pageSize: 1)
 
     expected = %Product{
       creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
@@ -593,7 +590,7 @@ defmodule ExSCEMSTest do
     assert [expected] == products
   end
 
-  test "get_product_by_id - success", %{bypass: bypass, config: config} do
+  test "get_product_by_id - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "GET", "/getProductById.xml", fn conn ->
       conn
       |> assert_query(%{"productId" => "1"})
@@ -628,7 +625,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, product} = ExSCEMS.get_product_by_id(config, 1)
+    {:ok, %{stat: "ok"}, product} = ExSCEMS.get_product_by_id(client, 1)
 
     expected = %Product{
       creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
@@ -648,7 +645,7 @@ defmodule ExSCEMSTest do
     assert expected == product
   end
 
-  test "get_product_by_name_and_version - success", %{bypass: bypass, config: config} do
+  test "get_product_by_name_and_version - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "GET", "/getProductByNameAndVer.xml", fn conn ->
       conn
       |> assert_query(%{"productName" => "foo", "productVersion" => "bar"})
@@ -684,7 +681,7 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %{stat: "ok"}, product} =
-      ExSCEMS.get_product_by_name_and_version(config, name: "foo", version: "bar")
+      ExSCEMS.get_product_by_name_and_version(client, name: "foo", version: "bar")
 
     expected = %Product{
       creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
@@ -708,7 +705,7 @@ defmodule ExSCEMSTest do
   # Entitlement
   #
 
-  test "create_entitlement - success", %{bypass: bypass, config: config} do
+  test "create_entitlement - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/createEntitlement.xml", fn conn ->
       conn
       |> assert_request_body(%{
@@ -731,7 +728,7 @@ defmodule ExSCEMSTest do
 
     {:ok, %Response{stat: "ok"}, 1, "d967c7ed-d783-466c-bfe0-96089ec93770"} =
       ExSCEMS.create_entitlement(
-        config,
+        client,
         startDate: "2017-01-01",
         endDate: "2500-12-31",
         customerId: 1,
@@ -740,7 +737,7 @@ defmodule ExSCEMSTest do
       )
   end
 
-  test "create_entitlement - fail", %{bypass: bypass, config: config} do
+  test "create_entitlement - fail", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/createEntitlement.xml", fn conn ->
       conn
       |> assert_request_body(%{})
@@ -760,10 +757,10 @@ defmodule ExSCEMSTest do
        error_code: "100",
        error_desc: "The request parameter is not valid.",
        stat: "fail"
-     }} = ExSCEMS.create_entitlement(config, [])
+     }} = ExSCEMS.create_entitlement(client, [])
   end
 
-  test "search_entitlements - success", %{bypass: bypass, config: config} do
+  test "search_entitlements - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "GET", "/searchEntitlements.xml", fn conn ->
       conn
       |> assert_query(%{"pageSize" => "1"})
@@ -803,7 +800,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, entitlements} = ExSCEMS.search_entitlements(config, pageSize: 1)
+    {:ok, %{stat: "ok"}, entitlements} = ExSCEMS.search_entitlements(client, pageSize: 1)
 
     expected = %Entitlement{
       id: 1045,
@@ -833,7 +830,7 @@ defmodule ExSCEMSTest do
     assert [expected] == entitlements
   end
 
-  test "get_entitlement_by_id - success", %{bypass: bypass, config: config} do
+  test "get_entitlement_by_id - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "GET", "/getEntitlementDetailsById.xml", fn conn ->
       conn
       |> assert_query(%{"entId" => "1045", "fetchCompleteEID" => "true"})
@@ -916,7 +913,7 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %Response{stat: "ok"}, ent} =
-      ExSCEMS.get_entitlement_by_id(config, 1045, fetchCompleteEID: true)
+      ExSCEMS.get_entitlement_by_id(client, 1045, fetchCompleteEID: true)
 
     expected = %Entitlement{
       id: 1045,
@@ -973,7 +970,7 @@ defmodule ExSCEMSTest do
   # LineItem
   #
 
-  test "create_line_item - success", %{bypass: bypass, config: config} do
+  test "create_line_item - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/addEntitlementItem.xml", fn conn ->
       conn
       |> assert_request_body(%{
@@ -992,13 +989,13 @@ defmodule ExSCEMSTest do
 
     {:ok, %Response{stat: "ok"}, 1} =
       ExSCEMS.create_line_item(
-        config,
+        client,
         entId: 1,
         productId: 2
       )
   end
 
-  test "create_line_item - fail", %{bypass: bypass, config: config} do
+  test "create_line_item - fail", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/addEntitlementItem.xml", fn conn ->
       conn
       |> assert_request_body(%{})
@@ -1018,10 +1015,10 @@ defmodule ExSCEMSTest do
        error_code: "100",
        error_desc: "The request parameter is not valid.",
        stat: "fail"
-     }} = ExSCEMS.create_line_item(config, [])
+     }} = ExSCEMS.create_line_item(client, [])
   end
 
-  test "search_line_items - success", %{bypass: bypass, config: config} do
+  test "search_line_items - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "GET", "/getEntitlementItemByCriteria.xml", fn conn ->
       conn
       |> assert_query(%{"lastModified" => "1452556494000"})
@@ -1086,7 +1083,7 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %{stat: "ok"}, line_items} =
-      ExSCEMS.search_line_items(config, lastModified: 1_452_556_494_000)
+      ExSCEMS.search_line_items(client, lastModified: 1_452_556_494_000)
 
     expected = %LineItem{
       id: 234,
@@ -1121,7 +1118,7 @@ defmodule ExSCEMSTest do
     assert [expected] == line_items
   end
 
-  test "get_line_item_by_id - success", %{bypass: bypass, config: config} do
+  test "get_line_item_by_id - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "GET", "/getEntitlementItemById.xml", fn conn ->
       conn
       |> assert_query(%{"lineItemId" => "234"})
@@ -1183,7 +1180,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, line_item} = ExSCEMS.get_line_item_by_id(config, 234)
+    {:ok, %{stat: "ok"}, line_item} = ExSCEMS.get_line_item_by_id(client, 234)
 
     expected = %LineItem{
       id: 234,
@@ -1218,7 +1215,7 @@ defmodule ExSCEMSTest do
     assert expected == line_item
   end
 
-  test "update_line_item - success", %{bypass: bypass, config: config} do
+  test "update_line_item - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/updateEntitlementItem.xml", fn conn ->
       conn
       |> assert_request_body(%{
@@ -1236,13 +1233,13 @@ defmodule ExSCEMSTest do
 
     {:ok, %Response{stat: "ok"}} =
       ExSCEMS.update_line_item(
-        config,
+        client,
         lineItemId: 1,
         refId1: "foo"
       )
   end
 
-  test "delete_line_item - success", %{bypass: bypass, config: config} do
+  test "delete_line_item - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/removeEntitlementItem.xml", fn conn ->
       conn
       |> assert_request_body(%{"lineItemId" => "1"})
@@ -1255,10 +1252,10 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %Response{stat: "ok"}} = ExSCEMS.delete_line_item(config, 1)
+    {:ok, %Response{stat: "ok"}} = ExSCEMS.delete_line_item(client, 1)
   end
 
-  test "get_line_item_feature_assoc - success", %{bypass: bypass, config: config} do
+  test "get_line_item_feature_assoc - success", %{bypass: bypass, client: client} do
     xml_str = """
     <?xml version="1.0" encoding="UTF-8"?>
     <emsResponse>
@@ -1298,10 +1295,10 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %Response{stat: "ok", body: ^xml_str}} =
-      ExSCEMS.get_line_item_feature_assoc(config, 7938)
+      ExSCEMS.get_line_item_feature_assoc(client, 7938)
   end
 
-  test "update_line_item_feature_assoc - success", %{bypass: bypass, config: config} do
+  test "update_line_item_feature_assoc - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/updateFeatureLineItemAssociation.xml", fn conn ->
       conn
       |> assert_request_body(%{"featureDetails" => "<xml></xml>"})
@@ -1314,10 +1311,10 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %Response{stat: "ok"}} = ExSCEMS.update_line_item_feature_assoc(config, "<xml></xml>")
+    {:ok, %Response{stat: "ok"}} = ExSCEMS.update_line_item_feature_assoc(client, "<xml></xml>")
   end
 
-  test "get_line_item_feature_lm_assoc - success", %{bypass: bypass, config: config} do
+  test "get_line_item_feature_lm_assoc - success", %{bypass: bypass, client: client} do
     xml_str = """
     <?xml version="1.0" encoding="UTF-8"?>
     <emsResponse>
@@ -1373,10 +1370,10 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %Response{stat: "ok", body: ^xml_str}} =
-      ExSCEMS.get_line_item_feature_lm_assoc(config, 7938)
+      ExSCEMS.get_line_item_feature_lm_assoc(client, 7938)
   end
 
-  test "update_line_item_feature_lm_assoc - success", %{bypass: bypass, config: config} do
+  test "update_line_item_feature_lm_assoc - success", %{bypass: bypass, client: client} do
     Bypass.expect_once(bypass, "POST", "/updateLineItemFeatureLMAssociation.xml", fn conn ->
       conn
       |> assert_request_body(%{"featureLMDetails" => "<xml></xml>"})
@@ -1390,7 +1387,7 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %Response{stat: "ok"}} =
-      ExSCEMS.update_line_item_feature_lm_assoc(config, "<xml></xml>")
+      ExSCEMS.update_line_item_feature_lm_assoc(client, "<xml></xml>")
   end
 
   #

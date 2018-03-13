@@ -6,68 +6,53 @@ defmodule ExSCEMS.Client do
   - Parse XML response body
   """
 
+  require Tesla
+
   import SweetXml
 
-  alias HTTPoison.Response, as: RawResponse
+  alias Tesla.Env, as: RawResponse
+  alias Tesla.Middleware
   alias ExSCEMS.Response
 
-  @default_headers [
-    {"user-agent", "ex_scems"}
-  ]
-
-  @type response :: Response.t()
-
-  @doc """
-  Issues an HTTP request with the given method to the given url.
-  """
-  def request(method, url, body \\ "", headers \\ [], options \\ [])
-
-  def request(method, url, body, headers, options) when is_map(body) or is_list(body),
-    do: request(method, url, {:form, body}, headers, options)
-
-  def request(method, url, body, headers, options) do
-    case HTTPoison.request(method, url, body, build_headers(headers, body), options) do
-      {:ok, raw_resp} ->
-        resp =
-          raw_resp
-          |> unpack_raw_response()
-          |> transform_headers()
-          |> build_response()
-          |> parse_xml!()
-
-        {:ok, resp}
-
-      {:error, error} ->
-        {:error, error}
-    end
+  def build_client(endpoint) do
+    Tesla.build_client([
+      {Middleware.BaseUrl, endpoint},
+      Middleware.FormUrlencoded,
+      Middleware.Logger,
+      Middleware.DebugLogger,
+      {Middleware.Headers, %{"user-agent" => "ex_scems"}}
+    ])
   end
 
-  defp build_headers(headers, ""), do: headers ++ @default_headers
-
-  defp build_headers(headers, _body),
-    do: headers ++ @default_headers ++ [{"content-type", "application/x-www-form-urlencoded"}]
-
-  defp unpack_raw_response(%RawResponse{status_code: status_code, headers: headers, body: body}),
-    do: {status_code, headers, body}
-
-  defp transform_headers({status_code, headers, body}) do
-    headers = Enum.group_by(headers, fn {k, _} -> String.downcase(k) end, fn {_, v} -> v end)
-    {status_code, headers, body}
+  def build_client(endpoint, session_id) do
+    Tesla.build_client([
+      {Middleware.BaseUrl, endpoint},
+      Middleware.FormUrlencoded,
+      Middleware.Logger,
+      Middleware.DebugLogger,
+      {Middleware.Headers,
+       %{"Cookie" => "JSESSIONID= " <> session_id, "user-agent" => "ex_scems"}}
+    ])
   end
 
-  defp build_response({status_code, headers, body}),
-    do: %Response{body: body, headers: headers, status_code: status_code}
-
-  defp parse_xml!(%Response{body: body} = resp) when byte_size(body) == 0, do: resp
-
-  defp parse_xml!(%Response{headers: headers} = resp) do
-    case Map.get(headers, "content-type") do
-      ["application/xml" <> _] -> do_parse_xml!(resp)
-      nil -> resp
-    end
+  def request(client, opts) do
+    client
+    |> Tesla.request(opts)
+    |> to_response()
+    |> parse_xml()
+    |> to_tuple()
+  rescue
+    ex in Tesla.Error ->
+      {:error, ex}
   end
 
-  defp do_parse_xml!(%Response{body: body} = resp) do
+  defp to_response(%RawResponse{status: status, headers: headers, body: body}),
+    do: %Response{body: body, headers: headers, status_code: status}
+
+  defp parse_xml(
+         %Response{headers: %{"content-type" => "application/xml" <> _}, body: body} = resp
+       )
+       when byte_size(body) > 0 do
     body_xml = parse(body)
 
     map =
@@ -85,4 +70,9 @@ defmodule ExSCEMS.Client do
 
     struct(resp, map)
   end
+
+  defp parse_xml(resp), do: resp
+
+  def to_tuple(%Response{stat: "ok"} = resp), do: {:ok, resp}
+  def to_tuple(other), do: {:error, other}
 end
