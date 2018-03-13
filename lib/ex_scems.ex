@@ -13,7 +13,7 @@ defmodule ExSCEMS do
   # Request
   #
 
-  def request(method, path, query, body, %Config{endpoint: endpoint, session_id: session_id}) do
+  def request(%Config{endpoint: endpoint, session_id: session_id}, method, path, query, body) do
     url = build_url(endpoint, path, query)
     headers = [{"Cookie", "JSESSIONID=" <> session_id}]
 
@@ -24,9 +24,9 @@ defmodule ExSCEMS do
     end
   end
 
-  defp get(config, path, query), do: request(:get, path, query, "", config)
+  defp get(config, path, query), do: request(config, :get, path, query, "")
 
-  defp post(config, path, body), do: request(:post, path, [], body, config)
+  defp post(config, path, body), do: request(config, :post, path, [], body)
 
   defp build_url(endpoint, path, []), do: endpoint <> path
   defp build_url(endpoint, path, query), do: endpoint <> path <> "?" <> URI.encode_query(query)
@@ -83,7 +83,7 @@ defmodule ExSCEMS do
 
   [Create Customer](http://documentation.sentinelcloud.com/wsg/createCustomer.htm)
   """
-  def create_customer(form, config) do
+  def create_customer(config, form) do
     case post(config, "/createCustomer.xml", form) do
       {:ok, resp} -> {:ok, resp, xpath(resp.body_xml, ~x"//customerId/text()"i)}
       {:error, error} -> {:error, error}
@@ -95,15 +95,15 @@ defmodule ExSCEMS do
 
   [Delete Customer](http://documentation.sentinelcloud.com/wsg/deleteCustomerById.htm)
   """
-  @spec delete_customer(String.t(), Config.t()) :: {:ok, Response.t()} | {:error, any}
-  def delete_customer(id, config), do: post(config, "/deleteCustomerById.xml", customerId: id)
+  @spec delete_customer(Config.t(), String.t()) :: {:ok, Response.t()} | {:error, any}
+  def delete_customer(config, id), do: post(config, "/deleteCustomerById.xml", customerId: id)
 
   @doc """
   Search customers/view all customers for the given query parameters.
 
   [Search Customers](http://documentation.sentinelcloud.com/wsg/searchCustomers.htm)
   """
-  def search_customers(options \\ [], config) do
+  def search_customers(config, options \\ []) do
     case get(config, "/searchCustomers.xml", options) do
       {:ok, resp} -> {:ok, resp, parse_customers(resp.body_xml)}
       {:error, error} -> {:error, error}
@@ -114,7 +114,7 @@ defmodule ExSCEMS do
   Retrieve details of a customer using exact customer name.
   [Retrieve Customer Details by Name](http://documentation.sentinelcloud.com/wsg/getCustomerByCustomerNam.htm)
   """
-  def search_customers_by_name(name, config) do
+  def search_customers_by_name(config, name) do
     case get(config, "/getCustomerByCustomerName.xml", customerName: name) do
       {:ok, resp} -> {:ok, resp, parse_customers(resp.body_xml)}
       {:error, error} -> {:error, error}
@@ -129,7 +129,7 @@ defmodule ExSCEMS do
 
   http://documentation.sentinelcloud.com/wsg/getCustomerById.htm
   """
-  def get_customer_by_id(id, config) do
+  def get_customer_by_id(config, id) do
     case get(config, "/getCustomerById.xml", customerId: id) do
       {:ok, resp} -> {:ok, resp, Customer.parse_xml(resp.body_xml)}
       {:error, error} -> {:error, error}
@@ -141,7 +141,7 @@ defmodule ExSCEMS do
 
   [Retrieve Customer by Customer Ref ID](http://documentation.sentinelcloud.com/wsg/getCustomerByCustomerRefId.htm)
   """
-  def get_customer_by_customer_ref_id(id, config) do
+  def get_customer_by_customer_ref_id(config, id) do
     case get(config, "/getCustomerByCustomerRefId.xml", customerRefId: id) do
       {:ok, resp} -> {:ok, resp, Customer.parse_xml(resp.body_xml)}
       {:error, error} -> {:error, error}
@@ -155,7 +155,7 @@ defmodule ExSCEMS do
   @doc """
   [Create Product](http://documentation.sentinelcloud.com/wsg/createProduct.htm)
   """
-  def create_product(form, config) do
+  def create_product(config, form) do
     case post(config, "/createProduct.xml", form) do
       {:ok, resp} -> {:ok, resp, xpath(resp.body_xml, ~x"//productId/text()"i)}
       {:error, error} -> {:error, error}
@@ -167,7 +167,7 @@ defmodule ExSCEMS do
 
   [Search Products](http://documentation.sentinelcloud.com/WSG/searchProducts.htm)
   """
-  def search_products(options, config) do
+  def search_products(config, options) do
     case get(config, "/searchProducts.xml", options) do
       {:ok, resp} -> {:ok, resp, parse_products(resp.body_xml)}
       {:error, error} -> {:error, error}
@@ -182,7 +182,7 @@ defmodule ExSCEMS do
 
   [Retrieve Product Details by productId](http://documentation.sentinelcloud.com/WSG/getProductById.htm)
   """
-  def get_product_by_id(id, config) do
+  def get_product_by_id(config, id) do
     case get(config, "/getProductById.xml", productId: id) do
       {:ok, resp} -> {:ok, resp, Product.parse_xml(resp.body_xml)}
       {:error, error} -> {:error, error}
@@ -194,7 +194,7 @@ defmodule ExSCEMS do
 
   [Retrieve Product Details By Name and Version](http://documentation.sentinelcloud.com/WSG/getProductByNameAndVer.htm)
   """
-  def get_product_by_name_and_version([name: name, version: version], config) do
+  def get_product_by_name_and_version(config, name: name, version: version) do
     case get(config, "/getProductByNameAndVer.xml", productName: name, productVersion: version) do
       {:ok, resp} -> {:ok, resp, Product.parse_xml(resp.body_xml)}
       {:error, error} -> {:error, error}
@@ -210,7 +210,7 @@ defmodule ExSCEMS do
 
   [Create Entitlement Using Parameters](http://documentation.sentinelcloud.com/wsg/createEntitlement.htm)
   """
-  def create_entitlement(form, config) do
+  def create_entitlement(config, form) do
     case post(config, "/createEntitlement.xml", form) do
       {:ok, resp} ->
         {
@@ -230,7 +230,7 @@ defmodule ExSCEMS do
 
   [Search Entitlements](http://documentation.sentinelcloud.com/WSG/searchEntitlements.htm)
   """
-  def search_entitlements(options, config) do
+  def search_entitlements(config, options) do
     case get(config, "/searchEntitlements.xml", options) do
       {:ok, resp} ->
         {
@@ -254,7 +254,7 @@ defmodule ExSCEMS do
 
   [Retrieve Details of an Entitlement](http://documentation.sentinelcloud.com/wsg/getEntitlementDetailsbyID.htm)
   """
-  def get_entitlement_by_id(id, options, config) do
+  def get_entitlement_by_id(config, id, options) do
     case get(config, "/getEntitlementDetailsById.xml", Keyword.put_new(options, :entId, id)) do
       {:ok, resp} -> {:ok, resp, Entitlement.parse_xml(resp.body_xml)}
       {:error, error} -> {:error, error}
@@ -268,7 +268,7 @@ defmodule ExSCEMS do
   @doc """
   [Add a Product to an Entitlement](http://documentation.sentinelcloud.com/WSG/addEntitlementItem.htm)
   """
-  def create_line_item(options, config) do
+  def create_line_item(config, options) do
     case post(config, "/addEntitlementItem.xml", options) do
       {:ok, resp} -> {:ok, resp, xpath(resp.body_xml, ~x"//id/text()"i)}
       {:error, error} -> {:error, error}
@@ -280,7 +280,7 @@ defmodule ExSCEMS do
 
   [Retrieve Line Item Details By Criteria](http://documentation.sentinelcloud.com/WSG/getEntitlementItemByCriteria.htm)
   """
-  def search_line_items(options, config) do
+  def search_line_items(config, options) do
     case get(config, "/getEntitlementItemByCriteria.xml", options) do
       {:ok, resp} ->
         {
@@ -304,7 +304,7 @@ defmodule ExSCEMS do
 
   [Retrieve Entitlement Line Item Details](http://documentation.sentinelcloud.com/WSG/getEntitlementItemById.htm)
   """
-  def get_line_item_by_id(id, config) do
+  def get_line_item_by_id(config, id) do
     case get(config, "/getEntitlementItemById.xml", lineItemId: id) do
       {:ok, resp} -> {:ok, resp, LineItem.parse_xml(resp.body_xml)}
       {:error, error} -> {:error, error}
@@ -314,35 +314,35 @@ defmodule ExSCEMS do
   @doc """
   [Update Entitlement Line Items](http://documentation.sentinelcloud.com/WSG/updateEntitlementItem.htm)
   """
-  def update_line_item(form, config), do: post(config, "/updateEntitlementItem.xml", form)
+  def update_line_item(config, form), do: post(config, "/updateEntitlementItem.xml", form)
 
   @doc """
   [Remove Entitlement Line Item](http://documentation.sentinelcloud.com/WSG/removeEntitlementItem.htm)
   """
-  def delete_line_item(id, config), do: post(config, "/removeEntitlementItem.xml", lineItemId: id)
+  def delete_line_item(config, id), do: post(config, "/removeEntitlementItem.xml", lineItemId: id)
 
   @doc """
   [Retrieve Entitlement Line Item Feature Association](http://documentation.sentinelcloud.com/WSG/retrieveFeatureLineItemAssociation.htm)
   """
-  def get_line_item_feature_assoc(id, config),
+  def get_line_item_feature_assoc(config, id),
     do: get(config, "/retrieveFeatureLineItemAssociation.xml", lineItemId: id)
 
   @doc """
   [Update Line Item Feature Association](http://documentation.sentinelcloud.com/WSG/updateFeatureLineItemAssociation.htm)
   """
-  def update_line_item_feature_assoc(xml_string, config),
+  def update_line_item_feature_assoc(config, xml_string),
     do: post(config, "/updateFeatureLineItemAssociation.xml", featureDetails: xml_string)
 
   @doc """
   [Retrieve Entitlement Line Item Feature License Model Association](http://documentation.sentinelcloud.com/WSG/retrieveLineItemFeatureLMAssociation.htm)
   """
-  def get_line_item_feature_lm_assoc(id, config),
+  def get_line_item_feature_lm_assoc(config, id),
     do: get(config, "/retrieveLineItemFeatureLMAssociation.xml", lineItemId: id)
 
   @doc """
   [Update Line Item Feature License Model Association](http://documentation.sentinelcloud.com/WSG/updateLineItemFeatureLMAssociation.htm)
   """
-  def update_line_item_feature_lm_assoc(xml_string, config),
+  def update_line_item_feature_lm_assoc(config, xml_string),
     do: post(config, "/updateLineItemFeatureLMAssociation.xml", featureLMDetails: xml_string)
 
   #
@@ -353,5 +353,5 @@ defmodule ExSCEMS do
   [Retrieve Feature By Criteria](http://documentation.sentinelcloud.com/WSG/featureList.htm)
   """
   # TODO: parse
-  def create_feature(form, config), do: post(config, "/featureList.xml", form)
+  def create_feature(config, form), do: post(config, "/featureList.xml", form)
 end

@@ -55,11 +55,12 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:error, %Response{
-      error_code: "215",
-      error_desc: "Incorrect user name or password provided.",
-      stat: "fail"
-    }} = ExSCEMS.login_by_vendor("http://127.0.0.1:#{bypass.port}", "foo", "bar")
+    {:error,
+     %Response{
+       error_code: "215",
+       error_desc: "Incorrect user name or password provided.",
+       stat: "fail"
+     }} = ExSCEMS.login_by_vendor("http://127.0.0.1:#{bypass.port}", "foo", "bar")
   end
 
   test "login_by_eid - success", %{bypass: bypass} do
@@ -99,11 +100,12 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:error, %Response{
-      error_code: "621",
-      error_desc: "The entitlement does not exist. Retry with a correct ID.",
-      stat: "fail"
-    }} =
+    {:error,
+     %Response{
+       error_code: "621",
+       error_desc: "The entitlement does not exist. Retry with a correct ID.",
+       stat: "fail"
+     }} =
       ExSCEMS.login_by_eid(
         "http://127.0.0.1:#{bypass.port}",
         "c84dc253-a1cf-4eb2-82ae-76cef4cac953"
@@ -146,11 +148,12 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:error, %Response{
-      error_code: "217",
-      error_desc: "E-mail or password is incorrect. Try again with correct credentials.",
-      stat: "fail"
-    }} = ExSCEMS.login_by_contact("http://127.0.0.1:#{bypass.port}", "foo@example.com", "bar")
+    {:error,
+     %Response{
+       error_code: "217",
+       error_desc: "E-mail or password is incorrect. Try again with correct credentials.",
+       stat: "fail"
+     }} = ExSCEMS.login_by_contact("http://127.0.0.1:#{bypass.port}", "foo@example.com", "bar")
   end
 
   #
@@ -177,8 +180,10 @@ defmodule ExSCEMSTest do
 
     {:ok, %Response{stat: "ok"}, 3682} =
       ExSCEMS.create_customer(
-        [customerName: "foo", isEnabled: true, customerRefIdType: "guid"],
-        config
+        config,
+        customerName: "foo",
+        isEnabled: true,
+        customerRefIdType: "guid"
       )
   end
 
@@ -197,11 +202,12 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:error, %Response{
-      error_code: "100",
-      error_desc: "The request parameter is not valid.",
-      stat: "fail"
-    }} = ExSCEMS.create_customer([], config)
+    {:error,
+     %Response{
+       error_code: "100",
+       error_desc: "The request parameter is not valid.",
+       stat: "fail"
+     }} = ExSCEMS.create_customer(config, [])
   end
 
   test "delete_customer - success", %{bypass: bypass, config: config} do
@@ -218,7 +224,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}} = ExSCEMS.delete_customer(1, config)
+    {:ok, %{stat: "ok"}} = ExSCEMS.delete_customer(config, 1)
   end
 
   test "delete_customer - fail", %{bypass: bypass, config: config} do
@@ -236,11 +242,12 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:error, %Response{
-      error_code: "519",
-      error_desc: "Customer not found for the given customerID.",
-      stat: "fail"
-    }} = ExSCEMS.delete_customer(1, config)
+    {:error,
+     %Response{
+       error_code: "519",
+       error_desc: "Customer not found for the given customerID.",
+       stat: "fail"
+     }} = ExSCEMS.delete_customer(config, 1)
   end
 
   test "search_customers - success", %{bypass: bypass, config: config} do
@@ -270,7 +277,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, customers} = ExSCEMS.search_customers([pageSize: 1], config)
+    {:ok, %{stat: "ok"}, customers} = ExSCEMS.search_customers(config, pageSize: 1)
 
     expected = %Customer{
       contacts: nil,
@@ -327,7 +334,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, customers} = ExSCEMS.search_customers_by_name("foo", config)
+    {:ok, %{stat: "ok"}, customers} = ExSCEMS.search_customers_by_name(config, "foo")
 
     expected = %Customer{
       contacts: [
@@ -389,7 +396,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, customer} = ExSCEMS.get_customer_by_id(123, config)
+    {:ok, %{stat: "ok"}, customer} = ExSCEMS.get_customer_by_id(config, 123)
 
     expected = %Customer{
       contacts: [
@@ -452,7 +459,7 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %{stat: "ok"}, customer} =
-      ExSCEMS.get_customer_by_customer_ref_id("dummy-customer-ref-id", config)
+      ExSCEMS.get_customer_by_customer_ref_id(config, "dummy-customer-ref-id")
 
     expected = %Customer{
       contacts: [
@@ -504,14 +511,12 @@ defmodule ExSCEMSTest do
 
     {:ok, %Response{stat: "ok"}, 1} =
       ExSCEMS.create_product(
-        [
-          namespaceName: "Default",
-          productName: "FooProduct",
-          productVersion: "2",
-          productDescription: "description",
-          serviceAgreementID: 2
-        ],
-        config
+        config,
+        namespaceName: "Default",
+        productName: "FooProduct",
+        productVersion: "2",
+        productDescription: "description",
+        serviceAgreementID: 2
       )
   end
 
@@ -530,11 +535,12 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:error, %Response{
-      error_code: "100",
-      error_desc: "The request parameter is not valid.",
-      stat: "fail"
-    }} = ExSCEMS.create_product([], config)
+    {:error,
+     %Response{
+       error_code: "100",
+       error_desc: "The request parameter is not valid.",
+       stat: "fail"
+     }} = ExSCEMS.create_product(config, [])
   end
 
   test "search_products - success", %{bypass: bypass, config: config} do
@@ -567,7 +573,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, products} = ExSCEMS.search_products([pageSize: 1], config)
+    {:ok, %{stat: "ok"}, products} = ExSCEMS.search_products(config, pageSize: 1)
 
     expected = %Product{
       creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
@@ -622,7 +628,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, product} = ExSCEMS.get_product_by_id(1, config)
+    {:ok, %{stat: "ok"}, product} = ExSCEMS.get_product_by_id(config, 1)
 
     expected = %Product{
       creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
@@ -678,7 +684,7 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %{stat: "ok"}, product} =
-      ExSCEMS.get_product_by_name_and_version([name: "foo", version: "bar"], config)
+      ExSCEMS.get_product_by_name_and_version(config, name: "foo", version: "bar")
 
     expected = %Product{
       creation_time: parse_iso8601_datetime!("2017-01-01T00:00:00.000Z"),
@@ -725,14 +731,12 @@ defmodule ExSCEMSTest do
 
     {:ok, %Response{stat: "ok"}, 1, "d967c7ed-d783-466c-bfe0-96089ec93770"} =
       ExSCEMS.create_entitlement(
-        [
-          startDate: "2017-01-01",
-          endDate: "2500-12-31",
-          customerId: 1,
-          contactEmail: "1@example.com",
-          isRetail: false
-        ],
-        config
+        config,
+        startDate: "2017-01-01",
+        endDate: "2500-12-31",
+        customerId: 1,
+        contactEmail: "1@example.com",
+        isRetail: false
       )
   end
 
@@ -751,11 +755,12 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:error, %Response{
-      error_code: "100",
-      error_desc: "The request parameter is not valid.",
-      stat: "fail"
-    }} = ExSCEMS.create_entitlement([], config)
+    {:error,
+     %Response{
+       error_code: "100",
+       error_desc: "The request parameter is not valid.",
+       stat: "fail"
+     }} = ExSCEMS.create_entitlement(config, [])
   end
 
   test "search_entitlements - success", %{bypass: bypass, config: config} do
@@ -798,7 +803,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, entitlements} = ExSCEMS.search_entitlements([pageSize: 1], config)
+    {:ok, %{stat: "ok"}, entitlements} = ExSCEMS.search_entitlements(config, pageSize: 1)
 
     expected = %Entitlement{
       id: 1045,
@@ -911,7 +916,7 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %Response{stat: "ok"}, ent} =
-      ExSCEMS.get_entitlement_by_id(1045, [fetchCompleteEID: true], config)
+      ExSCEMS.get_entitlement_by_id(config, 1045, fetchCompleteEID: true)
 
     expected = %Entitlement{
       id: 1045,
@@ -987,11 +992,9 @@ defmodule ExSCEMSTest do
 
     {:ok, %Response{stat: "ok"}, 1} =
       ExSCEMS.create_line_item(
-        [
-          entId: 1,
-          productId: 2
-        ],
-        config
+        config,
+        entId: 1,
+        productId: 2
       )
   end
 
@@ -1010,11 +1013,12 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:error, %Response{
-      error_code: "100",
-      error_desc: "The request parameter is not valid.",
-      stat: "fail"
-    }} = ExSCEMS.create_line_item([], config)
+    {:error,
+     %Response{
+       error_code: "100",
+       error_desc: "The request parameter is not valid.",
+       stat: "fail"
+     }} = ExSCEMS.create_line_item(config, [])
   end
 
   test "search_line_items - success", %{bypass: bypass, config: config} do
@@ -1082,7 +1086,7 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %{stat: "ok"}, line_items} =
-      ExSCEMS.search_line_items([lastModified: 1_452_556_494_000], config)
+      ExSCEMS.search_line_items(config, lastModified: 1_452_556_494_000)
 
     expected = %LineItem{
       id: 234,
@@ -1179,7 +1183,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %{stat: "ok"}, line_item} = ExSCEMS.get_line_item_by_id(234, config)
+    {:ok, %{stat: "ok"}, line_item} = ExSCEMS.get_line_item_by_id(config, 234)
 
     expected = %LineItem{
       id: 234,
@@ -1232,11 +1236,9 @@ defmodule ExSCEMSTest do
 
     {:ok, %Response{stat: "ok"}} =
       ExSCEMS.update_line_item(
-        [
-          lineItemId: 1,
-          refId1: "foo"
-        ],
-        config
+        config,
+        lineItemId: 1,
+        refId1: "foo"
       )
   end
 
@@ -1253,7 +1255,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %Response{stat: "ok"}} = ExSCEMS.delete_line_item(1, config)
+    {:ok, %Response{stat: "ok"}} = ExSCEMS.delete_line_item(config, 1)
   end
 
   test "get_line_item_feature_assoc - success", %{bypass: bypass, config: config} do
@@ -1296,7 +1298,7 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %Response{stat: "ok", body: ^xml_str}} =
-      ExSCEMS.get_line_item_feature_assoc(7938, config)
+      ExSCEMS.get_line_item_feature_assoc(config, 7938)
   end
 
   test "update_line_item_feature_assoc - success", %{bypass: bypass, config: config} do
@@ -1312,7 +1314,7 @@ defmodule ExSCEMSTest do
       """)
     end)
 
-    {:ok, %Response{stat: "ok"}} = ExSCEMS.update_line_item_feature_assoc("<xml></xml>", config)
+    {:ok, %Response{stat: "ok"}} = ExSCEMS.update_line_item_feature_assoc(config, "<xml></xml>")
   end
 
   test "get_line_item_feature_lm_assoc - success", %{bypass: bypass, config: config} do
@@ -1371,7 +1373,7 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %Response{stat: "ok", body: ^xml_str}} =
-      ExSCEMS.get_line_item_feature_lm_assoc(7938, config)
+      ExSCEMS.get_line_item_feature_lm_assoc(config, 7938)
   end
 
   test "update_line_item_feature_lm_assoc - success", %{bypass: bypass, config: config} do
@@ -1388,7 +1390,7 @@ defmodule ExSCEMSTest do
     end)
 
     {:ok, %Response{stat: "ok"}} =
-      ExSCEMS.update_line_item_feature_lm_assoc("<xml></xml>", config)
+      ExSCEMS.update_line_item_feature_lm_assoc(config, "<xml></xml>")
   end
 
   #
